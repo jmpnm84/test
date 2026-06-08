@@ -1,666 +1,644 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
-  <meta charset="utf-8">
-  <title>Trigo Trace</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    :root {
-      --primary: #2b6cb0;
-      --bg: #f7fafc;
-      --card-bg: #ffffff;
-      --text: #2d3748;
-      --border: #e2e8f0;
-      --ok: #48bb78;
-      --ret: #ecc94b;
-      --nok: #f56565;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 10px; font-size: 13px; }
-    main { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 10px; }
-    @media(min-width: 768px) {
-      main { grid-template-columns: 1fr 1fr; }
-      .full-width { grid-column: 1 / -1; }
-    }
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    h2 { font-size: 14px; margin-bottom: 10px; color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
-    .form-group { margin-bottom: 8px; }
-    label { display: block; margin-bottom: 3px; font-weight: 600; color: #4a5568; font-size: 11px; }
-    input, select, textarea { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 4px; background: #fff; font-size: 12px; color: var(--text); }
-    input:focus, select:focus { border-color: var(--primary); outline: none; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-    button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: opacity 0.2s; }
-    button:hover { opacity: 0.9; }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-success { background: var(--ok); color: white; }
-    .btn-danger { background: var(--nok); color: white; }
-    .btn-warning { background: var(--ret); color: #744210; }
-    .btn-secondary { background: #e2e8f0; color: #4a5568; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#005596">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>TRIGO - Rastreabilidade Peças PTCNT</title>
     
-    /* Abas de Configuração */
-    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
-    .tab { padding: 6px 12px; cursor: pointer; border: 1px solid transparent; border-bottom: none; border-top-left-radius: 4px; border-top-right-radius: 4px; font-weight: 600; font-size: 12px; }
-    .tab.active { background: #fff; border-color: var(--border); margin-bottom: -1px; color: var(--primary); }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2dpdGh1Yi5jb20vdXNlci1hdHRhY2htZW50cy9hc3NldHMvNzg3OTAwNzEtOTNmMi00ZGU3LThkYjQtZGNiOGNjMjhiNDViIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9LAogICAgewogICAgICAic3JjIjogImh0dHBzOi8vZ2l0aHViLmNvbS91c2VyLWF0dGFjaG1lbnRzL2Fzc2V0cy83ODc5MDA3MS05M2YyLTRkZTctOWRiNC1kY2I4Y2MyOGI0NWIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIKICAgIH0KICBdCn0=">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        /* 1. VARIÁVEIS E GERAL */
+        :root { 
+            --p: #005596; 
+            --p-dark: #0e4c85; 
+            --ok: #27ae60; 
+            --nok: #c0392b; 
+            --ret: #f39c12; 
+            --bg: #f4f7f6;
+            --trigo-green: #97d700;
+        }
+        
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 5px; color: #333; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
 
-    /* Indicadores de Status nos Buffers */
-    .indicator-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-    .ind-card { border: 1px solid var(--border); border-radius: 6px; padding: 8px; text-align: center; background: #fff; position: relative;}
-    .ind-card.ok-style { border-left: 4px solid var(--ok); }
-    .ind-card.nok-style { border-left: 4px solid var(--nok); }
-    .ind-num { font-size: 18px; font-weight: bold; margin-bottom: 2px; }
-    .ind-label { font-size: 10px; color: #718096; text-transform: uppercase; }
-    .ind-perc { font-size: 11px; font-weight: bold; color: #4a5568; margin-top: 2px; }
-    .progress-bar-bg { width: 100%; height: 4px; background: #edf2f7; border-radius: 2px; margin-top: 4px; overflow: hidden; }
-    .progress-bar { height: 100%; width: 0%; transition: width 0.3s; }
-    .ok-bar { background: var(--ok); }
-    .nok-bar { background: var(--nok); }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        
+        .logo-container { display: flex; flex-direction: column; align-items: flex-end; }
+        .logo-img { height: 45px; width: auto; object-fit: contain; }
+        .version-text { font-size: 10px; font-weight: bold; color: #888; margin-top: 2px; font-family: monospace; }
 
-    /* Listas de Peças nos Buffers */
-    .buffer-box { border: 1px solid var(--border); border-radius: 6px; background: #fff; height: 110px; display: flex; flex-column: column; overflow: hidden; }
-    .buffer-box h3 { font-size: 11px; background: #f7fafc; padding: 4px 8px; border-bottom: 1px solid var(--border); color: #4a5568; }
-    .buffer-list { overflow-y: auto; padding: 5px; font-size: 11px; flex-grow: 1; }
-    .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
-    .buffer-item:hover { background: #fff5f5; color: var(--nok); }
+        #datetime-container { text-align: center; font-family: 'Courier New', Courier, monospace; color: var(--p-dark); line-height: 1.2; }
+        #live-date { font-size: 11px; font-weight: bold; display: block; }
+        #live-time { font-size: 14px; font-weight: 900; display: block; }
 
-    /* Estilos do Histórico com Submenus Agrupados */
-    .hist-group { margin-bottom: 6px; border: 1px solid var(--border); border-radius: 6px; background: #fff; overflow: hidden; }
-    .hist-summary { padding: 8px 12px; font-weight: bold; background: #edf2f7; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 12px; user-select: none; }
-    .hist-summary:hover { background: #e2e8f0; }
-    .hist-summary-left { display: flex; align-items: center; gap: 8px; }
-    .hist-count-badge { background: var(--primary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; }
-    .hist-content { padding: 6px; border-top: 1px solid var(--border); background: #fff; display: flex; flex-direction: column; gap: 4px; }
-    .hist-item { padding: 6px; border: 1px solid #edf2f7; border-radius: 4px; background: #f8fafc; font-size: 11px; }
-    .hist-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 4px; margin-top: 4px; color: #4a5568; font-size: 10px; background: #fff; padding: 4px; border-radius: 3px; border: 1px dashed #e2e8f0; }
-    .hist-header-line { display: flex; justify-content: space-between; align-items: center; font-weight: 600; margin-bottom: 2px; }
+        .tabs { display: flex; gap: 3px; }
+        .tab-btn { padding: 8px 12px; border: none; cursor: pointer; background: #ddd; color: #666; font-weight: bold; border-radius: 4px 4px 0 0; font-size: 11px; transition: 0.2s; }
+        .tab-btn.active { background: var(--p); color: white; }
 
-    /* Estilos de Cores para o Status no Histórico */
-    .status-badge { font-weight: bold; text-align: center; border-radius: 4px; padding: 3px 6px; display: inline-block; color: white; min-width: 90px; }
-    .status-ok { background-color: var(--ok); }
-    .status-retrabalhada { background-color: var(--ret); }
-    .status-nok { background-color: var(--nok); }
+        .header-section { background: var(--p-dark); padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+        .inputs-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+        label { display: block; font-size: 10px; font-weight: bold; margin-bottom: 3px; color: #ffffff; text-transform: uppercase; }
+        input, select { width: 100%; padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 13px; height: 34px; }
 
-    /* Modal do Status */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 10px; }
-    .modal-content { background: white; padding: 15px; border-radius: 8px; width: 100%; max-width: 340px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .modal h3 { font-size: 14px; margin-bottom: 12px; color: var(--primary); text-align: center; }
-    .modal button { font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: white; margin-bottom: 6px; width: 100%; }
-    #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 9999; display: none; font-size: 12px; white-space: nowrap; }
-  </style>
+        .dash { display: flex; gap: 8px; margin-bottom: 10px; }
+        .counter-card { flex: 1; padding: 8px; border-radius: 6px; color: white; text-align: center; position: relative; }
+        .c-ok { background: var(--ok); } 
+        .c-nok { background: var(--nok); }
+        .counter-card h2 { margin: 0; font-size: 1.2em; }
+        .perc-badge { position: absolute; top: 5px; right: 8px; font-size: 9px; background: rgba(0,0,0,0.2); padding: 2px 5px; border-radius: 10px; }
+        .progress-box { width: 100%; height: 5px; background: rgba(0,0,0,0.15); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+        .progress-bar { height: 100%; background: #fff; width: 0%; transition: width 0.3s ease; }
+
+        .scan-area { background: #2c3e50; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 10px; }
+        #input-dm { width: 100%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); color: white; font-size: 14px; outline: none; }
+
+        .buffer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .buffer-box { background: #fff; border-radius: 6px; height: 250px; display: flex; flex-direction: column; border: 1px solid #eee; overflow: hidden; }
+        .buffer-header { color: white; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 10px; min-height: 50px; }
+        .btn-mini-finish { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 0 12px; border-radius: 4px; cursor: pointer; height: 44px; min-width: 70px; font-weight: bold; }
+
+        .table-wrapper { max-height: 450px; overflow-y: auto; background: white; border-radius: 4px; }
+        table { width:100%; border-collapse: collapse; font-size: 10px; }
+        thead th { position: sticky; top: 0; background:#f2f2f2; padding: 8px; text-align: left; color: var(--p-dark); z-index: 5; }
+        td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+        .filter-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 10px; }
+
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:1000; }
+        .modal-content { background:white; padding:15px; border-radius:10px; text-align:center; width:95%; max-width:320px; }
+        .btn-decision { padding: 12px; font-size: 0.9em; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: white; margin-bottom: 6px; width: 100%; }
+        #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 9999; display: none; font-size: 12px; white-space: nowrap; }
+        
+        .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
+        .buffer-item:hover { background: #fff5f5; color: var(--nok); }
+
+        /* Estilos de Cores para o Status no Histórico */
+        .status-badge { font-weight: bold; text-align: center; border-radius: 4px; padding: 3px 6px; display: inline-block; color: white; min-width: 90px; }
+        .status-ok { background-color: var(--ok); }
+        .status-retrabalhada { background-color: var(--ret); }
+        .status-nok { background-color: var(--nok); }
+
+        /* Estilos adicionais para as linhas agrupadas de etiquetas */
+        .group-header { background-color: #e6f2ff !important; font-weight: bold; cursor: pointer; user-select: none; }
+        .group-header:hover { background-color: #d0e7ff !important; }
+        .child-row { display: none; background-color: #fafafa; }
+    </style>
 </head>
 <body>
 
 <div id="custom-toast"></div>
 
-<main>
-  <div class="card">
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab('tab-lote')">Lote / Ordem</div>
-      <div class="tab" onclick="switchTab('tab-campos')">Rastreabilidade</div>
-    </div>
-
-    <div id="tab-lote" class="tab-content active">
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Ordem de Produção (OP)</label>
-          <input type="text" id="cfg-op" placeholder="Ex: OP1234">
+<main class="container">
+    <header class="top-bar">
+        <nav class="tabs">
+            <button class="tab-btn active" id="btn-reg" onclick="switchTab('registo')">CONTROLO</button>
+            <button class="tab-btn" id="btn-hist" onclick="switchTab('historico')">HISTÓRICO</button>
+        </nav>
+        <div id="datetime-container">
+            <span id="live-date">00/00/0000</span>
+            <span id="live-time">00:00:00</span>
         </div>
-        <div class="form-group">
-          <label>Quantidade do Lote</label>
-          <input type="number" id="cfg-qval" placeholder="Ex: 100">
+        <div class="logo-container">
+            <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
+            <span class="version-text">v2.2.2</span>
         </div>
-      </div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Nº da Etiqueta / Referência</label>
-          <input type="text" id="cfg-ref" placeholder="Ex: REF-99" list="dl-ref">
-          <datalist id="dl-ref"></datalist>
+    </header>
+
+    <section id="view-registo">
+        <div class="header-section">
+            <div class="inputs-row">
+                <div>
+                    <label>Inspetor</label>
+                    <input type="text" id="inspetor" list="dl-inspetores">
+                </div>
+                <div><label>Referência</label><input type="text" id="referencia" list="dl-refs" onchange="autoQty(this.value)"></div>
+                <div><label>Missão</label><input type="text" id="missao" list="dl-missoes"></div>
+                <div><label>QTD</label><input type="number" id="quantidade" min="1" onchange="updateUI()"></div>
+            </div>
         </div>
-        <div class="form-group">
-          <label>Linha de Produção</label>
-          <input type="text" id="cfg-linha" placeholder="Ex: Linha A" list="dl-linha">
-          <datalist id="dl-linha"></datalist>
+
+        <div class="dash">
+            <div class="counter-card c-ok">
+                <div class="perc-badge" id="perc-ok">0%</div>
+                <span>PEÇAS OK</span>
+                <h2 id="ui-ok">0 / -</h2>
+                <div class="progress-box"><div id="bar-ok" class="progress-bar"></div></div>
+            </div>
+            <div class="counter-card c-nok">
+                <div class="perc-badge" id="perc-nok">0%</div>
+                <span>PEÇAS NOK</span>
+                <h2 id="ui-nok">0 / -</h2>
+                <div class="progress-box"><div id="bar-nok" class="progress-bar"></div></div>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <div id="tab-campos" class="tab-content">
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Inspetor / Operador</label>
-          <input type="text" id="f-insp" placeholder="Nome" list="dl-insp">
-          <datalist id="dl-insp"></datalist>
+        <div class="scan-area">
+            <h3 style="margin:0 0 5px 0; font-size:12px;">DATA MATRIX</h3>
+            <input type="text" id="input-dm" placeholder="Aguardando leitura..." onkeypress="handleScan(event)">
         </div>
-        <div class="form-group">
-          <label>Turno</label>
-          <select id="f-turno">
-            <option value="Turno 1">Turno 1</option>
-            <option value="Turno 2">Turno 2</option>
-            <option value="Turno 3">Turno 3</option>
-            <option value="Geral">Geral</option>
-          </select>
+
+        <div class="buffer-grid">
+            <div class="buffer-box">
+                <div class="buffer-header" style="background: var(--ok);">
+                    <span>LISTA OK</span>
+                    <button class="btn-mini-finish" onclick="forceFinish('OK')">FECHAR</button>
+                </div>
+                <div id="ok-list" style="overflow-y:auto; padding:5px; font-size:9px;"></div>
+            </div>
+            <div class="buffer-box">
+                <div class="buffer-header" style="background: var(--nok);">
+                    <span>LISTA NOK</span>
+                    <button class="btn-mini-finish" onclick="forceFinish('NOK')">FECHAR</button>
+                </div>
+                <div id="nok-list" style="overflow-y:auto; padding:5px; font-size:9px;"></div>
+            </div>
         </div>
-      </div>
-      <div class="form-group">
-        <label>Defeito Encontrado (Se NOK)</label>
-        <input type="text" id="f-defeito" placeholder="Descreva o defeito" list="dl-defeito">
-        <datalist id="dl-defeito"></datalist>
-      </div>
-      <div class="form-group">
-        <label>Observações Gerais</label>
-        <input type="text" id="f-obs" placeholder="Notas adicionais">
-      </div>
-    </div>
+    </section>
 
-    <div class="form-group" style="margin-top:10px; background:#ebf8ff; padding:8px; border-radius:6px; border:1px solid #bee3f8;">
-      <label style="color:#2b6cb0; font-size:12px;">LEITOR / INPUT DATA MATRIX</label>
-      <input type="text" id="scan-input" placeholder="Cole ou bipe o Data Matrix aqui..." style="font-size:14px; padding:8px; font-family:monospace;" onkeypress="handleScan(event)">
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>
-      <span>Buffers de Validação</span>
-      <button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="abrirModalFecho()">Fechar Lote</button>
-    </h2>
-
-    <div class="indicator-container">
-      <div class="ind-card ok-style">
-        <div class="ind-num" id="ui-ok">0 / -</div>
-        <div class="ind-label">Aprovadas (OK)</div>
-        <div class="ind-perc" id="perc-ok">0%</div>
-        <div class="progress-bar-bg"><div id="bar-ok" class="progress-bar ok-bar"></div></div>
-      </div>
-      <div class="ind-card nok-style">
-        <div class="ind-num" id="ui-nok">0 / -</div>
-        <div class="ind-label">Rejeitadas (NOK)</div>
-        <div class="ind-perc" id="perc-nok">0%</div>
-        <div class="progress-bar-bg"><div id="bar-nok" class="progress-bar nok-bar"></div></div>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="buffer-box">
-        <h3>Lista OK (Clique para remover)</h3>
-        <div id="ok-list" class="buffer-list"></div>
-      </div>
-      <div class="buffer-box">
-        <h3>Lista NOK (Clique para remover)</h3>
-        <div id="nok-list" class="buffer-list"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card full-width">
-    <h2>
-      <span>Histórico de Lotes Fechados</span>
-      <div style="display:flex; gap:6px;">
-        <button class="btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="exportarExcel()">Exportar Excel</button>
-        <button class="btn-danger" style="padding:4px 8px; font-size:11px; background:#e53e3e;" onclick="limparHistoricoTotal()">Limpar Tudo</button>
-      </div>
-    </h2>
-    <div id="history-container" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-      </div>
-  </div>
+    <section id="view-historico" style="display:none; background: var(--p-dark); padding: 10px; border-radius: 6px;">
+        <div class="hist-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: white; font-size: 11px;">
+            <span id="hist-counter">Registos: 0</span>
+            <div style="display:flex; gap:5px; flex-wrap: wrap;">
+                <button onclick="exportExcel()" style="background:var(--ok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">📤 EXCEL</button>
+                <button onclick="exportToGoogleDriveManual()" style="background:#00a3ff; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight: bold;">☁️ ENVIAR DRIVE</button>
+                <button onclick="clearHistorySecure()" style="background:var(--nok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">LIMPAR</button>
+            </div>
+        </div>
+        <div class="filter-bar">
+            <div><label>Inspetor</label><select id="f-insp" onchange="renderHist()"></select></div>
+            <div><label>Ref</label><select id="f-ref" onchange="renderHist()"></select></div>
+            <div><label>Status</label><select id="f-status" onchange="renderHist()"><option value="">Tudo</option><option value="OK">OK</option><option value="RETRABALHADA">RETRABALHADA</option><option value="NOK">NOK</option></select></div>
+            <div><label>Pesquisar DM</label><input type="text" id="f-dm-search" oninput="renderHist()"></div>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data/Hora Registo</th>
+                        <th>Data Produção</th>
+                        <th>Insp</th>
+                        <th>Ref</th>
+                        <th>Missão</th>
+                        <th>DM</th>
+                        <th>Etiqueta</th>
+                        <th>Status</th> </tr>
+                </thead>
+                <tbody id="tbody-hist"></tbody>
+            </table>
+        </div>
+    </section>
 </main>
 
 <div id="modal-status" class="modal">
-  <div class="modal-content">
-    <h3 id="modal-title-dm">Validar Peça</h3>
-    <button class="btn-success" style="padding:12px;" onclick="definirStatusPeca('OK')">APROVADO (OK)</button>
-    <button class="btn-warning" style="padding:12px; margin-bottom:12px;" onclick="definirStatusPeca('RETRABALHADA')">RETRABALHADA</button>
-    <div style="border-top:1px solid var(--border); margin-bottom:10px; padding-top:10px;"></div>
-    <button class="btn-danger" style="padding:12px;" onclick="definirStatusPeca('NOK')">REJEITADO (NOK)</button>
-    <button class="btn-secondary" style="padding:6px; margin-top:5px; font-size:11px;" onclick="fecharModalStatus()">Cancelar</button>
-  </div>
+    <div class="modal-content">
+        <h4>ESTADO DA PEÇA</h4>
+        <div id="dm-display" style="font-size:11px; margin-bottom:15px; color:#666"></div>
+        <button class="btn-decision" style="background:var(--ok)" onclick="applyStatus('OK')">✓ PEÇA OK</button>
+        <button class="btn-decision" style="background:var(--ret)" onclick="applyStatus('RETRABALHADA')">↺ RETRABALHADA</button>
+        <button class="btn-decision" style="background:var(--nok)" onclick="applyStatus('NOK')">✗ PEÇA NOK</button>
+        <button onclick="closeModalStatus()" style="border:none; background:none; font-size:11px; color:grey; cursor:pointer;">CANCELAR</button>
+    </div>
 </div>
 
 <div id="modal-fecho" class="modal">
-  <div class="modal-content">
-    <h3>FECHAR LOTE</h3>
-    <div class="form-group" style="margin-top:8px;">
-      <label>Data de Produção</label>
-      <input type="date" id="fecho-data">
+    <div class="modal-content">
+        <h3 id="fecho-titulo">FECHAR LOTE</h3>
+        <label style="color: #333; font-size: 11px; margin-bottom: 5px; display: block;">Data de produção</label>
+        <input type="date" id="data-fecho-lote" style="margin-bottom:8px;">
+        <input type="text" id="etiq-final" placeholder="Digitalizar Número de Etiqueta" style="margin-bottom:10px;">
+        <button class="btn-decision" style="background:var(--p)" onclick="confirmFinishLote()">FINALIZAR</button>
+        <button onclick="closeModalFecho()" style="border:none; background:none; font-size:11px; color:grey; cursor:pointer; margin-top:10px;">CANCELAR FECHO</button>
     </div>
-    <button class="btn-success" style="padding:10px; margin-top:10px;" onclick="confirmarFechamentoLote()">Confirmar e Gravar no Histórico</button>
-    <button class="btn-secondary" style="padding:6px; margin-top:5px; font-size:11px;" onclick="fecharModalFecho()">Voltar</button>
-  </div>
 </div>
 
+<datalist id="dl-inspetores"></datalist>
+<datalist id="dl-refs"></datalist>
+<datalist id="dl-missoes"></datalist>
+
 <script>
-  /* INDEXED DB ENGINE */
-  function openDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open("TrigoTraceDB", 1);
-      req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains("app_state")) db.createObjectStore("app_state");
-        if (!db.objectStoreNames.contains("history")) db.createObjectStore("history", { keyPath: "id", autoIncrement: true });
-      };
-      req.onsuccess = (e) => resolve(e.target.result);
-      req.onerror = (e) => reject(e.target.error);
-    });
-  }
-
-  async function saveToDB(storeName, key, value) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, "readwrite");
-      const store = tx.objectStore(storeName);
-      const req = key ? store.put(value, key) : store.add(value);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async function getFromDB(storeName, key) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, "readonly");
-      const store = tx.objectStore(storeName);
-      const req = store.get(key);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async function getAllFromDB(storeName) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, "readonly");
-      const store = tx.objectStore(storeName);
-      const req = store.getAll();
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async function deleteFromDB(storeName, key) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, "readwrite");
-      const store = tx.objectStore(storeName);
-      const req = store.delete(key);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async function clearStore(storeName) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, "readwrite");
-      const store = tx.objectStore(storeName);
-      const req = store.clear();
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  /* APP STATE */
-  let bufferOK = [];
-  let bufferNOK = [];
-  let currentScanDM = "";
-  let memoryLists = { lines: [], ref: [], inspectors: [], defects: [] };
-
-  function showToast(msg, type = "success") {
-    const t = document.getElementById("custom-toast");
-    t.innerText = msg;
-    t.style.background = type === "success" ? "var(--ok)" : "var(--nok)";
-    t.style.display = "block";
-    setTimeout(() => { t.style.display = "none"; }, 2500);
-  }
-
-  function switchTab(id) {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-    event.target.classList.add("active");
-    document.getElementById(id).classList.add("active");
-  }
-
-  async function loadState() {
-    const savedBuffers = await getFromDB("app_state", "buffers") || { ok: [], nok: [] };
-    bufferOK = savedBuffers.ok || [];
-    bufferNOK = savedBuffers.nok || [];
-    
-    memoryLists = await getFromDB("app_state", "memory_lists") || { lines: [], ref: [], inspectors: [], defects: [] };
-    
-    document.getElementById("cfg-op").value = await getFromDB("app_state", "cfg_op") || "";
-    document.getElementById("cfg-qval").value = await getFromDB("app_state", "cfg_qval") || "";
-    document.getElementById("cfg-ref").value = await getFromDB("app_state", "cfg_ref") || "";
-    document.getElementById("cfg-linha").value = await getFromDB("app_state", "cfg_linha") || "";
-    document.getElementById("f-insp").value = await getFromDB("app_state", "f_insp") || "";
-    document.getElementById("f-turno").value = await getFromDB("app_state", "f_turno") || "Turno 1";
-    document.getElementById("f-obs").value = await getFromDB("app_state", "f_obs") || "";
-
-    updateDatalists();
-    updateUI();
-    await renderHist();
-  }
-
-  async function saveMemory() {
-    await saveToDB("app_state", "buffers", { ok: bufferOK, nok: bufferNOK });
-    await saveToDB("app_state", "memory_lists", memoryLists);
-    await saveToDB("app_state", "cfg_op", document.getElementById("cfg-op").value.trim());
-    await saveToDB("app_state", "cfg_qval", document.getElementById("cfg-qval").value.trim());
-    await saveToDB("app_state", "cfg_ref", document.getElementById("cfg-ref").value.trim());
-    await saveToDB("app_state", "cfg_linha", document.getElementById("cfg-linha").value.trim());
-    await saveToDB("app_state", "f_insp", document.getElementById("f-insp").value.trim());
-    await saveToDB("app_state", "f_turno", document.getElementById("f-turno").value);
-    await saveToDB("app_state", "f_obs", document.getElementById("f-obs").value.trim());
-  }
-
-  function updateDatalists() {
-    const map = { "dl-ref": memoryLists.ref, "dl-linha": memoryLists.lines, "dl-insp": memoryLists.inspectors, "dl-defeito": memoryLists.defects };
-    for (let id in map) {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = (map[id] || []).map(i => `<option value="${i}">`).join("");
-    }
-  }
-
-  function addMemoryItem(type, val) {
-    if (!val) return;
-    if (!memoryLists[type]) memoryLists[type] = [];
-    if (!memoryLists[type].includes(val)) {
-      memoryLists[type].push(val);
-      updateDatalists();
-    }
-  }
-
-  function updateUI() {
-    const qVal = document.getElementById("cfg-qval").value;
-    const qNum = parseInt(qVal) || 0;
-    const pOK = qNum > 0 ? Math.round((bufferOK.length / qNum) * 100) : 0;
-    const pNOK = qNum > 0 ? Math.round((bufferNOK.length / qNum) * 100) : 0;
-    
-    document.getElementById("ui-ok").innerText = `${bufferOK.length} / ${qVal || '-'}`;
-    document.getElementById("ui-nok").innerText = `${bufferNOK.length} / ${qVal || '-'}`;
-    document.getElementById("perc-ok").innerText = `${pOK}%`;
-    document.getElementById("perc-nok").innerText = `${pNOK}%`;
-    document.getElementById("bar-ok").style.width = Math.min(pOK, 100) + "%";
-    document.getElementById("bar-nok").style.width = Math.min(pNOK, 100) + "%";
-
-    document.getElementById("ok-list").innerHTML = bufferOK.map((i, idx) => `
-      <div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">
-        ${i.dm} <small>(${i.status}) - ${i.hora || ""}</small>
-      </div>
-    `).reverse().join("");
-
-    document.getElementById("nok-list").innerHTML = bufferNOK.map((i, idx) => `
-      <div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">
-        ${i.dm} <small>- ${i.hora || ""}</small>
-      </div>
-    `).reverse().join("");
-  }
-
-  async function removeFromBuffer(type, idx) {
-    if (confirm("Remover esta peça do buffer?")) {
-      if (type === "OK") bufferOK.splice(idx, 1);
-      else bufferNOK.splice(idx, 1);
-      await saveMemory();
-      updateUI();
-    }
-  }
-
-  function handleScan(e) {
-    if (e.key === "Enter") {
-      const dm = e.target.value.trim().toUpperCase();
-      e.target.value = "";
-      if (!dm) return;
-
-      if (bufferOK.some(i => i.dm === dm) || bufferNOK.some(i => i.dm === dm)) {
-        showToast("Código Data Matrix já lido neste lote!", "danger");
-        return;
-      }
-
-      currentScanDM = dm;
-      document.getElementById("modal-title-dm").innerText = `Validar Peça: ${dm}`;
-      document.getElementById("modal-status").style.display = "flex";
-    }
-  }
-
-  function fecharModalStatus() {
-    document.getElementById("modal-status").style.display = "none";
-    focusDM();
-  }
-
-  async function definirStatusPeca(status) {
-    const hora = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    const item = {
-      dm: currentScanDM,
-      status: status,
-      hora: hora,
-      defeito: status === "NOK" ? document.getElementById("f-defeito").value.trim() : "",
-      inspetor: document.getElementById("f-insp").value.trim(),
-      turno: document.getElementById("f-turno").value,
-      obs: document.getElementById("f-obs").value.trim()
-    };
-
-    if (status === "NOK") {
-      bufferNOK.push(item);
-      addMemoryItem("defects", item.defeito);
-    } else {
-      bufferOK.push(item);
-    }
-
-    addMemoryItem("inspectors", item.inspetor);
-    addMemoryItem("ref", document.getElementById("cfg-ref").value.trim());
-    addMemoryItem("lines", document.getElementById("cfg-linha").value.trim());
-
-    await saveMemory();
-    updateDatalists();
-    document.getElementById("modal-status").style.display = "none";
-    
-    // Limpa o campo de defeito para a próxima leitura
-    document.getElementById("f-defeito").value = "";
-    
-    updateUI();
-    focusDM();
-    showToast(`Peça registrada como ${status}!`);
-  }
-
-  function abrirModalFecho() {
-    if (bufferOK.length === 0 && bufferNOK.length === 0) {
-      alert("Nenhum dado nos buffers para fechar!");
-      return;
-    }
-    document.getElementById("fecho-data").value = new Date().toISOString().split("T")[0];
-    document.getElementById("modal-fecho").style.display = "flex";
-  }
-
-  function fecharModalFecho() {
-    document.getElementById("modal-fecho").style.display = "none";
-    focusDM();
-  }
-
-  async function confirmarFechamentoLote() {
-    const dataFecho = document.getElementById("fecho-data").value;
-    if (!dataFecho) { alert("Selecione a data!"); return; }
-
-    const op = document.getElementById("cfg-op").value.trim() || "S/OP";
-    const ref = document.getElementById("cfg-ref").value.trim() || "S/REF";
-    const linha = document.getElementById("cfg-linha").value.trim() || "S/LINHA";
-    const qVal = document.getElementById("cfg-qval").value || "0";
-
-    const loteHistorico = {
-      op, ref, linha, qVal,
-      data: dataFecho,
-      timestamp: Date.now(),
-      pecasOK: [...bufferOK],
-      pecasNOK: [...bufferNOK]
-    };
-
-    await saveToDB("history", undefined, loteHistorico);
-
-    // Reseta buffers locais
-    bufferOK = [];
-    bufferNOK = [];
-    await saveMemory();
-
-    document.getElementById("modal-fecho").style.display = "none";
-    updateUI();
-    await renderHist();
-    showToast("Lote fechado e arquivado com sucesso!");
-    focusDM();
-  }
-
-  /* COMPONENTE DE HISTÓRICO ATUALIZADO (AGRUPADO EM SUBMENUS POR ETIQUETA/REFERÊNCIA) */
-  async function renderHist() {
-    const list = await getAllFromDB("history");
-    const container = document.getElementById("history-container");
-    
-    if (list.length === 0) {
-      container.innerHTML = `<div style="text-align:center; padding:20px; color:#a0aec0;">Nenhum lote arquivado.</div>`;
-      return;
-    }
-
-    // Ordena os lotes do mais recente para o mais antigo
-    list.sort((a, b) => b.timestamp - a.timestamp);
-
-    // Agrupa os lotes pelo número de etiqueta/referência (campo 'ref')
-    const gruposPorRef = {};
-    list.forEach(lote => {
-      const chaveRef = lote.ref || "SEM REFERÊNCIA";
-      if (!gruposPorRef[chaveRef]) {
-        gruposPorRef[chaveRef] = [];
-      }
-      gruposPorRef[chaveRef].push(lote);
-    });
-
-    let htmlTotal = "";
-
-    // Renderiza cada grupo estruturado como submenu usando as tags html <details> e <summary>
-    for (const refKey in gruposPorRef) {
-      const lotesDoGrupo = gruposPorRef[refKey];
-      
-      // Contabiliza o total de peças contidas dentro deste grupo de etiqueta específica
-      let totalPecasNoGrupo = 0;
-      lotesDoGrupo.forEach(lote => {
-        totalPecasNoGrupo += (lote.pecasOK ? lote.pecasOK.length : 0) + (lote.pecasNOK ? lote.pecasNOK.length : 0);
-      });
-
-      htmlTotal += `
-        <details class="hist-group">
-          <summary class="hist-summary">
-            <div class="hist-summary-left">
-              <span>Etiqueta / Referência: <strong>${refKey}</strong></span>
-            </div>
-            <span class="hist-count-badge">(${totalPecasNoGrupo})</span>
-          </summary>
-          <div class="hist-content">
-      `;
-
-      // Renderiza os lotes pertencentes a este submenu/referência
-      lotesDoGrupo.forEach(lote => {
-        const totalLote = lote.pecasOK.length + lote.pecasNOK.length;
-        
-        htmlTotal += `
-          <div class="hist-item" style="border-left: 4px solid var(--primary); margin-bottom: 6px;">
-            <div class="hist-header-line">
-              <span>OP: <strong>${lote.op}</strong> | Linha: <strong>${lote.linha}</strong> | Data: ${lote.data}</span>
-              <button class="btn-danger" style="padding:2px 6px; font-size:10px; background:#fc8181; color:#fff;" onclick="deletarLote(${lote.id})">Excluir Lote</button>
-            </div>
-            <div class="hist-meta">
-              <div><strong>Alvo do Lote:</strong> ${lote.qVal} pçs</div>
-              <div><strong>Aprovadas (OK):</strong> ${lote.pecasOK.length}</div>
-              <div><strong>Rejeitadas (NOK):</strong> ${lote.pecasNOK.length}</div>
-              <div><strong>Total Validado:</strong> ${totalLote}</div>
-            </div>
-            
-            <div style="margin-top:6px; font-size:10px; color:#4a5568;">
-              <details style="background:#f7fafc; border:1px solid #e2e8f0; border-radius:4px; padding:3px;">
-                <summary style="cursor:pointer; font-weight:600; padding:2px;">Ver detalhes das peças (${totalLote})</summary>
-                <div style="max-height:120px; overflow-y:auto; padding:4px; display:flex; flex-direction:column; gap:2px; background:#fff; margin-top:3px;">
-                  ${lote.pecasOK.map(p => `
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:2px;">
-                      <span>🧩 ${p.dm} <small>(${p.hora || ''})</small></span>
-                      <span class="status-badge status-ok" style="font-size:9px; padding:1px 4px; min-width:auto;">${p.status}</span>
-                    </div>
-                  `).join('')}
-                  ${lote.pecasNOK.map(p => `
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; padding:2px; color:#e53e3e;">
-                      <span>❌ ${p.dm} <small>(${p.hora || ''})</small> [Defeito: ${p.defeito || 'N/A'}]</span>
-                      <span class="status-badge status-nok" style="font-size:9px; padding:1px 4px; min-width:auto;">NOK</span>
-                    </div>
-                  `).join('')}
-                </div>
-              </details>
-            </div>
-          </div>
+    if ('serviceWorker' in navigator) {
+        const swCode = `
+            const CACHE_NAME = 'trigo-v17';
+            self.addEventListener('install', e => {
+                e.waitUntil(
+                    caches.open(CACHE_NAME).then(cache => cache.addAll(['./']))
+                    .then(() => self.skipWaiting())
+                );
+            });
+            self.addEventListener('activate', e => {
+                e.waitUntil(self.clients.claim());
+            });
+            self.addEventListener('fetch', e => {
+                e.respondWith(
+                    caches.match(e.request).then(res => res || fetch(e.request))
+                );
+            });
         `;
-      });
-
-      htmlTotal += `
-          </div>
-        </details>
-      `;
+        const dataUrl = 'data:text/javascript;base64,' + btoa(unescape(encodeURIComponent(swCode)));
+        navigator.serviceWorker.register(dataUrl)
+            .then(reg => console.log('SW instalado!', reg))
+            .catch(err => console.log('Erro SW:', err));
     }
 
-    container.innerHTML = htmlTotal;
-  }
+    // --- CONFIGURAÇÃO GOOGLE DRIVE ---
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9ADQzgT1wXZxAvSaSxc2lDkQpjWg8wn5VKzdQc_cGSLpbngqVQ2A36e-jS462U4DG/exec";
+    // ---------------------------------
 
-  async function deletarLote(id) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (confirm("Tem certeza que deseja excluir permanentemente este lote do histórico?")) {
-      await deleteFromDB("history", id);
-      await renderHist();
-      showToast("Lote removido do histórico.");
-    }
-  }
+    // --- INICIALIZAÇÃO INDEXEDDB ---
+    let dbInstance = null;
+    let memory = { users:[], refs:{}, missions:[] };
+    let bufferOK = [];
+    let bufferNOK = [];
+    let tempDM = null, currentLoteType = "";
 
-  async function limparHistoricoTotal() {
-    if (confirm("ATENÇÃO: Deseja apagar TODO o histórico de lotes fechados? Esta ação não pode ser desfeita.")) {
-      await clearStore("history");
-      await renderHist();
-      showToast("Histórico totalmente limpo!", "danger");
-    }
-  }
+    function initIndexedDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open("TrigoDB", 1);
+            
+            request.onerror = (e) => reject("Erro ao abrir IndexedDB");
+            
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains("historico")) {
+                    db.createObjectStore("historico", { keyPath: "dm" });
+                }
+                if (!db.objectStoreNames.contains("app_state")) {
+                    db.createObjectStore("app_state");
+                }
+            };
 
-  async function exportarExcel() {
-    const list = await getAllFromDB("history");
-    if (list.length === 0) { alert("Nenhum dado disponível para exportação!"); return; }
-
-    const rows = [];
-    list.forEach(lote => {
-      // Processa aprovados
-      lote.pecasOK.forEach(p => {
-        rows.push({
-          "Data do Lote": lote.data, "OP": lote.op, "Etiqueta/Referência": lote.ref, "Linha": lote.linha, "Meta Qtd Lote": lote.qVal,
-          "Código Data Matrix": p.dm, "Status Final": p.status, "Hora Validação": p.hora || "", "Defeito": "", "Inspetor": p.inspetor || "",
-          "Turno": p.turno || "", "Observações": p.obs || ""
+            request.onsuccess = async (e) => {
+                dbInstance = e.target.result;
+                await loadStateFromDB();
+                resolve();
+            };
         });
-      });
-      // Processa rejeitados
-      lote.pecasNOK.forEach(p => {
-        rows.push({
-          "Data do Lote": lote.data, "OP": lote.op, "Etiqueta/Referência": lote.ref, "Linha": lote.linha, "Meta Qtd Lote": lote.qVal,
-          "Código Data Matrix": p.dm, "Status Final": "NOK", "Hora Validação": p.hora || "", "Defeito": p.defeito || "", "Inspetor": p.inspetor || "",
-          "Turno": p.turno || "", "Observações": p.obs || ""
+    }
+
+    function getFromDB(storeName, key) {
+        return new Promise((resolve) => {
+            const transaction = dbInstance.transaction([storeName], "readonly");
+            const store = transaction.objectStore(storeName);
+            const request = store.get(key);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => resolve(null);
         });
-      });
-    });
+    }
 
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows);
-    XLSX.utils.book_append_sheet(wb, ws, "Rastreabilidade");
-    XLSX.writeFile(wb, "TrigoTrace_Export.xlsx");
-  }
+    function getAllFromDB(storeName) {
+        return new Promise((resolve) => {
+            const transaction = dbInstance.transaction([storeName], "readonly");
+            const store = transaction.objectStore(storeName);
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => resolve([]);
+        });
+    }
 
-  function focusDM() {
-    setTimeout(() => {
-      const input = document.getElementById("scan-input");
-      if (input) input.focus();
-    }, 150);
-  }
+    function saveToDB(storeName, key, value) {
+        return new Promise((resolve) => {
+            const transaction = dbInstance.transaction([storeName], "readwrite");
+            const store = transaction.objectStore(storeName);
+            const request = store.put(value, key);
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => resolve(false);
+        });
+    }
 
-  window.onload = () => {
-    loadState();
-    focusDM();
-  };
+    function savePieceToHist(item) {
+        return new Promise((resolve) => {
+            const transaction = dbInstance.transaction(["historico"], "readwrite");
+            const store = transaction.objectStore("historico");
+            const request = store.put(item);
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => resolve(false);
+        });
+    }
+
+    function clearStore(storeName) {
+        return new Promise((resolve) => {
+            const transaction = dbInstance.transaction([storeName], "readwrite");
+            const store = transaction.objectStore(storeName);
+            const request = store.clear();
+            request.onsuccess = () => resolve(true);
+        });
+    }
+
+    async function loadStateFromDB() {
+        memory = await getFromDB("app_state", "memory") || { users:[], refs:{}, missions:[] };
+        const savedBuffers = await getFromDB("app_state", "buffers") || { ok: [], nok: [] };
+        bufferOK = savedBuffers.ok || [];
+        bufferNOK = savedBuffers.nok || [];
+    }
+
+    async function saveBuffers() { 
+        await saveToDB("app_state", "buffers", { ok: bufferOK, nok: bufferNOK }); 
+    }
+
+    async function saveMemory() {
+        await saveToDB("app_state", "memory", memory);
+    }
+    // ---------------------------------
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('live-date').innerText = now.toLocaleDateString('pt-PT');
+        document.getElementById('live-time').innerText = now.toLocaleTimeString('pt-PT');
+    }
+    setInterval(updateClock, 1000);
+
+    async function switchTab(t) {
+        document.getElementById('view-registo').style.display = t === 'registo' ? 'block' : 'none';
+        document.getElementById('view-historico').style.display = t === 'historico' ? 'block' : 'none';
+        document.getElementById('btn-reg').classList.toggle('active', t === 'registo');
+        document.getElementById('btn-hist').classList.toggle('active', t === 'historico');
+        if(t === 'historico') { await updateFilterOptions(); await renderHist(); } else { focusDM(); }
+    }
+
+    function showPopup(msg, type = 'success') {
+        const toast = document.getElementById('custom-toast');
+        toast.innerText = msg;
+        toast.style.background = type === 'success' ? 'var(--ok)' : (type === 'error' ? 'var(--nok)' : 'var(--p)');
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    async function sendToGoogleDrive(payloadData) {
+        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("COLE_AQUI")) {
+            console.warn("URL do Google Script não configurado.");
+            return false;
+        }
+
+        const CHUNK_SIZE = 50; 
+        const totalItems = payloadData.length;
+        const totalChunks = Math.ceil(totalItems / CHUNK_SIZE);
+
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * CHUNK_SIZE;
+            const end = start + CHUNK_SIZE;
+            const chunk = payloadData.slice(start, end);
+
+            showPopup(`Nuvem: A sincronizar lote ${i + 1} de ${totalChunks}...`, "info");
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(chunk)
+                });
+                
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+            } catch (error) {
+                console.error(`Erro no lote ${i + 1}:`, error);
+                showPopup(`Falha no lote ${i + 1}. Operação cancelada!`, "error");
+                return false; 
+            }
+        }
+        return true;
+    }
+
+    async function exportToGoogleDriveManual() {
+        const dbList = await getAllFromDB("historico");
+        if (dbList.length === 0) {
+            showPopup("Não existem dados no Histórico para exportar!", "error");
+            return;
+        }
+        
+        if (confirm(`Deseja exportar todos os ${dbList.length} registos do Histórico para o Google Drive de forma segura (em lotes)?`)) {
+            const sucesso = await sendToGoogleDrive(dbList);
+            if (sucesso) {
+                showPopup("Todo o Histórico foi sincronizado com sucesso!", "success");
+            }
+        }
+    }
+
+    function updateUI() {
+        const qVal = document.getElementById('quantidade').value;
+        const qNum = parseInt(qVal) || 0;
+        const pOK = qNum > 0 ? Math.round((bufferOK.length / qNum) * 100) : 0;
+        const pNOK = qNum > 0 ? Math.round((bufferNOK.length / qNum) * 100) : 0;
+        document.getElementById('ui-ok').innerText = `${bufferOK.length} / ${qVal || '-'}`;
+        document.getElementById('ui-nok').innerText = `${bufferNOK.length} / ${qVal || '-'}`;
+        document.getElementById('perc-ok').innerText = `${pOK}%`;
+        document.getElementById('perc-nok').innerText = `${pNOK}%`;
+        document.getElementById('bar-ok').style.width = Math.min(pOK, 100) + "%";
+        document.getElementById('bar-nok').style.width = Math.min(pNOK, 100) + "%";
+        document.getElementById('ok-list').innerHTML = bufferOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">${i.dm} <small>(${i.status}) - ${i.hora || ''}</small></div>`).reverse().join('');
+        document.getElementById('nok-list').innerHTML = bufferNOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">${i.dm} <small>- ${i.hora || ''}</small></div>`).reverse().join('');
+    }
+
+    async function removeFromBuffer(type, idx) {
+        if(confirm("Remover esta peça?")) {
+            if(type === 'OK') bufferOK.splice(idx, 1); else bufferNOK.splice(idx, 1);
+            await saveBuffers(); updateUI();
+        }
+    }
+
+    function handleScan(e) {
+        if (e.key === 'Enter') {
+            const dm = e.target.value.trim().toUpperCase(); 
+            e.target.value = "";
+            if(!dm) return;
+            if (bufferOK.some(i => i.dm === dm) || bufferNOK.some(i => i.dm === dm)) { showPopup("Já existe no buffer atual!", "error"); return; }
+            if(!document.getElementById('referencia').value || !document.getElementById('quantidade').value || !document.getElementById('inspetor').value) {
+                showPopup("Falta Inspetor, Ref ou QTD!", "error"); return;
+            }
+            tempDM = dm;
+            document.getElementById('dm-display').innerText = dm;
+            document.getElementById('modal-status').style.display = 'flex';
+        }
+    }
+
+    async function applyStatus(status) {
+        const agora = new Date();
+        const dataHoraRegisto = agora.toLocaleDateString('pt-PT') + ' ' + agora.toLocaleTimeString('pt-PT');
+
+        const item = {
+            insp: document.getElementById('inspetor').value.trim(),
+            ref: document.getElementById('referencia').value.toUpperCase().trim(),
+            missao: document.getElementById('missao').value.trim(),
+            dm: tempDM, 
+            status: status,
+            hora: dataHoraRegisto
+        };
+        if(item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
+        if(item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
+        memory.refs[item.ref] = document.getElementById('quantidade').value;
+        
+        await saveMemory();
+        updateDatalists();
+        document.getElementById('modal-status').style.display = 'none';
+        if(status === 'OK' || status === 'RETRABALHADA') bufferOK.push(item); else bufferNOK.push(item);
+        
+        const targetQty = parseInt(document.getElementById('quantidade').value);
+        if(bufferOK.length >= targetQty) { currentLoteType = "OK"; openFechoModal(); }
+        else if(bufferNOK.length >= targetQty) { currentLoteType = "NOK"; openFechoModal(); }
+        
+        await saveBuffers(); updateUI(); focusDM();
+    }
+
+    function openFechoModal() {
+        document.getElementById('fecho-titulo').innerText = `FECHAR LOTE ${currentLoteType}`;
+        document.getElementById('data-fecho-lote').valueAsDate = new Date();
+        document.getElementById('modal-fecho').style.display = 'flex';
+        setTimeout(() => document.getElementById('etiq-final').focus(), 300);
+    }
+
+    async function confirmFinishLote() {
+        const etiq = document.getElementById('etiq-final').value.trim();
+        const data = document.getElementById('data-fecho-lote').value;
+        if(!etiq || !data) { showPopup("Faltam dados!", "error"); return; }
+        
+        const lote = (currentLoteType === "OK") ? bufferOK : bufferNOK;
+        
+        for (let i of lote) {
+            i.etiqueta = etiq; 
+            i.data_producao = data; 
+            await savePieceToHist(i);
+        }
+
+        await sendToGoogleDrive(lote);
+
+        if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
+        await saveBuffers(); 
+        document.getElementById('modal-fecho').style.display = 'none';
+        document.getElementById('etiq-final').value = ""; 
+        updateUI(); 
+        showPopup("Lote Finalizado e Processado!"); 
+        focusDM();
+    }
+
+    function closeModalFecho() { document.getElementById('modal-fecho').style.display = 'none'; focusDM(); }
+    function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; focusDM(); }
+    function forceFinish(type) { if((type === 'OK' ? bufferOK : bufferNOK).length > 0) { currentLoteType = type; openFechoModal(); } }
+    function focusDM() { document.getElementById('input-dm').focus(); }
+    function autoQty(val) { focusDM(); }
+
+    function updateDatalists() {
+        document.getElementById('dl-inspetores').innerHTML = memory.users.map(u => `<option value="${u}">`).join('');
+        document.getElementById('dl-refs').innerHTML = Object.keys(memory.refs).map(r => `<option value="${r}">`).join('');
+        document.getElementById('dl-missoes').innerHTML = memory.missions.map(m => `<option value="${m}">`).join('');
+    }
+
+    function toggleEtiquetaGroup(id) {
+        const rows = document.querySelectorAll(`.child-of-${id}`);
+        rows.forEach(row => {
+            row.style.display = (row.style.display === 'table-row') ? 'none' : 'table-row';
+        });
+    }
+
+    async function renderHist() {
+        const fi = document.getElementById('f-insp').value;
+        const fr = document.getElementById('f-ref').value;
+        const fs = document.getElementById('f-status').value;
+        const fdm = document.getElementById('f-dm-search').value.trim().toUpperCase();
+        
+        const dbList = await getAllFromDB("historico");
+        const filtered = dbList.filter(p => (fi==="" || p.insp===fi) && (fr==="" || p.ref===fr) && (fs==="" || p.status===fs) && (fdm==="" || p.dm.includes(fdm)));
+        
+        document.getElementById('hist-counter').innerText = `Registos: ${filtered.length}`;
+
+        // Agrupamento por Etiqueta mantendo a ordem inversa dos registos originais
+        const groups = {};
+        const orderedEtiquetas = [];
+        
+        filtered.slice().reverse().forEach(p => {
+            const etiq = p.etiqueta || "SEM_ETIQUETA";
+            if (!groups[etiq]) {
+                groups[etiq] = [];
+                orderedEtiquetas.push(etiq);
+            }
+            groups[etiq].push(p);
+        });
+
+        let html = '';
+        orderedEtiquetas.forEach((etiq, groupIdx) => {
+            const items = groups[etiq];
+            const totalCount = items.length;
+            const cleanEtiq = etiq === "SEM_ETIQUETA" ? "Sem Etiqueta" : etiq;
+
+            // Linha Mãe do Submenu (Agrupamento por Etiqueta)
+            html += `<tr class="group-header" onclick="toggleEtiquetaGroup('${groupIdx}')">
+                <td colspan="6" style="padding: 10px; font-size: 11px;">📁 Etiqueta: <strong>${cleanEtiq}</strong></td>
+                <td colspan="2" style="padding: 10px; text-align: right; font-size: 11px;"><strong>(${totalCount}) Peças</strong></td>
+            </tr>`;
+
+            // Linhas Filhas (Itens em Submenu)
+            items.forEach(p => {
+                let statusClass = '';
+                if (p.status === 'OK') statusClass = 'status-ok';
+                else if (p.status === 'RETRABALHADA') statusClass = 'status-retrabalhada';
+                else if (p.status === 'NOK') statusClass = 'status-nok';
+
+                html += `<tr class="child-row child-of-${groupIdx}">
+                    <td>${p.hora || ''}</td>
+                    <td>${p.data_producao || ''}</td>
+                    <td>${p.insp || ''}</td>
+                    <td>${p.ref || ''}</td>
+                    <td>${p.missao || ''}</td>
+                    <td>${p.dm || ''}</td>
+                    <td>${p.etiqueta || ''}</td>
+                    <td><span class="status-badge ${statusClass}">${p.status || ''}</span></td>
+                </tr>`;
+            });
+        });
+
+        document.getElementById('tbody-hist').innerHTML = html;
+    }
+
+    async function updateFilterOptions() {
+        const dbList = await getAllFromDB("historico");
+        const insps = [...new Set(dbList.map(i => i.insp).filter(Boolean))];
+        const refs = [...new Set(dbList.map(i => i.ref).filter(Boolean))];
+        document.getElementById('f-insp').innerHTML = '<option value="">Todos</option>' + insps.map(i => `<option value="${i}">${i}</option>`).join('');
+        document.getElementById('f-ref').innerHTML = '<option value="">Todas</option>' + refs.map(r => `<option value="${r}">${r}</option>`).join('');
+    }
+
+    async function exportExcel() {
+        const dbList = await getAllFromDB("historico");
+        
+        const formattedList = dbList.map(item => ({
+            "Data/Hora Registo": item.hora || "",
+            "Data Production": item.data_producao || "",
+            "Inspetor": item.insp || "",
+            "Referência": item.ref || "",
+            "Missão": item.missao || "",
+            "Data Matrix": item.dm || "",
+            "Etiqueta": item.etiqueta || "",
+            "Status": item.status || ""
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(formattedList);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Dados");
+        XLSX.writeFile(wb, "Traca_Export.xlsx");
+    }
+
+    async function clearHistorySecure() { 
+        if(confirm("Limpar tudo localmente?") && prompt("Digite APAGAR") === "APAGAR") { 
+            await clearStore("historico");
+            await renderHist(); 
+        } 
+    }
+
+    window.onload = async () => { 
+        updateClock(); 
+        try {
+            await initIndexedDB();
+            updateDatalists(); 
+            updateUI(); 
+            focusDM(); 
+        } catch(e) {
+            showPopup("Erro ao iniciar base de dados interna!", "error");
+        }
+    };
 </script>
 </body>
 </html>
