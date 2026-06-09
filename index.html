@@ -36,7 +36,6 @@
         #live-date { font-size: 11px; font-weight: bold; display: block; }
         #live-time { font-size: 14px; font-weight: 900; display: block; }
         
-        /* NOVO: Estilo do Indicador de Conetividade */
         .drive-status-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-top: 3px; border: 1px solid #ccc; background: #fff; }
         .drive-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
         .drive-online { background-color: var(--ok); box-shadow: 0 0 6px var(--ok); }
@@ -134,7 +133,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v3.8.0-CloudCheck</span>
+            <span class="version-text">v3.9.0-AutoFinish</span>
         </div>
     </header>
 
@@ -317,7 +316,6 @@
     async function savePieceToHist(item) { const tx = dbInstance.transaction(["historico"], "readwrite"); tx.objectStore("historico").put(item); }
     async function clearStore(store) { const tx = dbInstance.transaction([store], "readwrite"); tx.objectStore(store).clear(); }
 
-    // NOVO: Atualizador visual do estado da conetividade
     function updateCloudStatus(isOnline) {
         const dot = document.getElementById('drive-dot');
         const text = document.getElementById('drive-text');
@@ -337,7 +335,7 @@
             if (!response.ok) throw new Error();
             const cloudRecords = await response.json();
             
-            updateCloudStatus(true); // Conetividade OK
+            updateCloudStatus(true);
             
             if (Array.isArray(cloudRecords) && cloudRecords.length > 0) {
                 const tx = dbInstance.transaction(["historico"], "readwrite");
@@ -357,7 +355,7 @@
                 showPopup(`Nuvem Sincronizada! ${cloudRecords.length} registos carregados.`, "success");
             }
         } catch (e) {
-            updateCloudStatus(false); // Falha de ligação
+            updateCloudStatus(false);
             console.warn("Modo Offline: Não foi possível descarregar dados atualizados da Nuvem.");
         }
         
@@ -458,6 +456,7 @@
         const qVal = document.getElementById('quantidade').value;
         const qNum = parseInt(qVal) || 0;
         const refVal = document.getElementById('referencia').value.toUpperCase().trim();
+        const inputDm = document.getElementById('input-dm');
         
         document.getElementById('ui-ok').innerText = `${bufferOK.length} / ${qVal || '-'}`;
         document.getElementById('ui-nok').innerText = `${bufferNOK.length} / ${qVal || '-'}`;
@@ -480,11 +479,15 @@
             scanTitle.innerText = "⚠️ LOTE COMPLETO! SUBSCREVA A ETIQUETA!";
             document.getElementById('btn-fechar-ok').className = "btn-mini-finish " + (bufferOK.length >= qNum ? "piscar" : "");
             document.getElementById('btn-fechar-nok').className = "btn-mini-finish " + (bufferNOK.length >= qNum ? "piscar" : "");
+            inputDm.disabled = true;
+            inputDm.placeholder = "Lote completo. Feche para continuar.";
         } else {
             scanArea.className = "scan-area";
             scanTitle.innerHTML = `DATA MATRIX`;
             document.getElementById('btn-fechar-ok').className = "btn-mini-finish";
             document.getElementById('btn-fechar-nok').className = "btn-mini-finish";
+            inputDm.disabled = false;
+            inputDm.placeholder = "Aguardando leitura...";
         }
     }
 
@@ -495,6 +498,7 @@
             const refVal = document.getElementById('referencia').value;
             await learnReferencePattern(refVal);
             updateUI();
+            focusDM();
         }
     }
 
@@ -508,6 +512,7 @@
             const scanArea = document.getElementById('scan-area-box');
             const activeRef = document.getElementById('referencia').value.toUpperCase().trim();
 
+            // Segurança redundante caso o campo sofra bypass
             if (qNum > 0 && (bufferOK.length >= qNum || bufferNOK.length >= qNum)) {
                 currentLoteType = bufferOK.length >= qNum ? "OK" : "NOK";
                 openFechoModal();
@@ -578,12 +583,15 @@
         if(status === 'OK' || status === 'RETRABALHADA') bufferOK.push(item); else bufferNOK.push(item);
         
         const targetQty = parseInt(document.getElementById('quantidade').value);
-        await saveBuffers(); updateUI(); focusDM();
+        await saveBuffers(); updateUI(); 
 
+        // CORREÇÃO CRÍTICA: O gatilho agora dispara IMEDIATAMENTE aqui mal a última peça entra no array
         if(bufferOK.length >= targetQty || bufferNOK.length >= targetQty) { 
             currentLoteType = bufferOK.length >= targetQty ? "OK" : "NOK"; 
             playBeep(880, 0.1); setTimeout(() => playBeep(880, 0.1), 150); 
             openFechoModal(); 
+        } else {
+            focusDM();
         }
     }
 
@@ -617,10 +625,10 @@
         focusDM();
     }
 
-    function closeModalFecho() { document.getElementById('modal-fecho').style.display = 'none'; focusDM(); }
+    function closeModalFecho() { document.getElementById('modal-fecho').style.display = 'none'; updateUI(); focusDM(); }
     function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; focusDM(); }
     function forceFinish(type) { if((type === 'OK' ? bufferOK : bufferNOK).length > 0) { currentLoteType = type; openFechoModal(); } }
-    function focusDM() { document.getElementById('input-dm').focus(); }
+    function focusDM() { const input = document.getElementById('input-dm'); if(!input.disabled) input.focus(); }
 
     function updateDatalists() {
         document.getElementById('dl-inspetores').innerHTML = memory.users.map(u => `<option value="${u}">`).join('');
