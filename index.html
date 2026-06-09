@@ -124,7 +124,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v3.0.0</span>
+            <span class="version-text">v3.6.0-CloudSync</span>
         </div>
     </header>
 
@@ -159,7 +159,7 @@
         <div class="scan-area" id="scan-area-box">
             <h3 id="scan-title" style="margin:0 0 5px 0; font-size:12px;">DATA MATRIX <span id="ref-badge-indicator" style="display:none;"></span></h3>
             <input type="text" id="input-dm" placeholder="Aguardando leitura..." onkeypress="handleScan(event)">
-            <span id="pattern-info">Sem padrão conhecido para esta referência.</span>
+            <span id="pattern-info">Sincronizando com a Nuvem...</span>
         </div>
 
         <div class="buffer-grid">
@@ -185,7 +185,7 @@
             <span id="hist-counter">Registos: 0</span>
             <div style="display:flex; gap:5px; flex-wrap: wrap;">
                 <button onclick="exportExcel()" style="background:var(--ok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">📤 EXCEL</button>
-                <button onclick="exportToGoogleDriveManual()" style="background:#00a3ff; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight: bold;">☁️ ENVIAR DRIVE</button>
+                <button onclick="syncFromCloud()" style="background:#00a3ff; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight: bold;">🔄 ATUALIZAR NUVEM</button>
                 <button onclick="clearHistorySecure()" style="background:var(--nok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">LIMPAR</button>
             </div>
         </div>
@@ -243,7 +243,7 @@
 <script>
     if ('serviceWorker' in navigator) {
         const swCode = `
-            const CACHE_NAME = 'trigo-v21';
+            const CACHE_NAME = 'trigo-v25-cloud';
             self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['./'])).then(() => self.skipWaiting())); });
             self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });
             self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))); });
@@ -260,11 +260,8 @@
     let bufferOK = [];
     let bufferNOK = [];
     let tempDM = null, currentLoteType = "";
-    
-    // Controlo de Padrões por Referência (Aprendizagem Automática)
     let currentRefPattern = null; 
 
-    // Sistema de Feedback de Áudio Integrado
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playBeep(freq, duration) {
         try {
@@ -311,7 +308,41 @@
     async function savePieceToHist(item) { const tx = dbInstance.transaction(["historico"], "readwrite"); tx.objectStore("historico").put(item); }
     async function clearStore(store) { const tx = dbInstance.transaction([store], "readwrite"); tx.objectStore(store).clear(); }
 
-    // --- ALGORITMO DE APRENDIZAGEM INTELIGENTE ---
+    // --- NOVA FUNÇÃO: SINCRONIZAÇÃO DIRETA DA NUVEM PARA A BASE DE DADOS LOCAL ---
+    async function syncFromCloud() {
+        if (!GOOGLE_SCRIPT_URL) return;
+        try {
+            const response = await fetch(GOOGLE_SCRIPT_URL);
+            if (!response.ok) throw new Error();
+            const cloudRecords = await response.json();
+            
+            if (Array.isArray(cloudRecords) && cloudRecords.length > 0) {
+                const tx = dbInstance.transaction(["historico"], "readwrite");
+                const store = tx.objectStore("historico");
+                
+                cloudRecords.forEach(item => {
+                    if (item.dm) {
+                        store.put(item);
+                        // Reconstrói listas inteligentes dinâmicas na memória global
+                        if (item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
+                        if (item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
+                        if (item.ref && !memory.refs[item.ref]) memory.refs[item.ref] = "100";
+                    }
+                });
+                
+                await saveMemory();
+                updateDatalists();
+                showPopup(`Nuvem Sincronizada! ${cloudRecords.length} registos carregados.`, "success");
+            }
+        } catch (e) {
+            console.warn("Modo Offline: Não foi possível descarregar dados atualizados da Nuvem.");
+        }
+        
+        const activeRef = document.getElementById('referencia').value.toUpperCase().trim();
+        await learnReferencePattern(activeRef);
+    }
+
+    // --- ALGORITMO DE APRENDIZAGEM INTELIGENTE (HÍBRIDO NUVEM + LOCAL) ---
     async function learnReferencePattern(refVal) {
         refVal = refVal.toUpperCase().trim();
         const patternInfoSpan = document.getElementById('pattern-info');
@@ -322,7 +353,7 @@
             return;
         }
 
-        // 1. Procurar peças históricas validadas no IndexedDB desta referência
+        // 1. Pesquisa no banco local unificado (que agora já inclui o que veio do Sheets)
         const allHist = await getAllFromDB("historico");
         const matches = allHist.filter(p => p.ref === refVal);
 
@@ -331,18 +362,17 @@
             const targetLen = firstDM.length;
             const targetPrefix = firstDM.substring(0, Math.min(4, targetLen));
 
-            // Confirma se o histórico mantém consistência de tamanho e prefixo
             const isConsistent = matches.every(p => p.dm.length === targetLen && p.dm.startsWith(targetPrefix));
 
             if (isConsistent) {
-                currentRefPattern = { length: targetLen, prefix: targetPrefix, source: "Histórico Aprendido" };
+                currentRefPattern = { length: targetLen, prefix: targetPrefix, source: "Nuvem/Histórico" };
                 patternInfoSpan.innerText = `Padrão Ativo: ${targetLen} carateres (Início: "${targetPrefix}")`;
                 focusDM();
                 return;
             }
         }
 
-        // 2. Se não houver histórico, aprende com as leituras temporárias em curso no lote atual
+        // 2. Fallback temporário para o lote corrente
         const currentBatch = [...bufferOK, ...bufferNOK];
         if (currentBatch.length > 0) {
             const firstDM = currentBatch[0].dm;
@@ -352,9 +382,8 @@
             return;
         }
 
-        // 3. Caso seja um produto novo
         currentRefPattern = null;
-        patternInfoSpan.innerText = "ℹ️ Referência Nova: O formato será memorizado no primeiro registo.";
+        patternInfoSpan.innerText = "ℹ️ Referência Nova/Sem Padrão: Formato memorizado na primeira peça.";
         focusDM();
     }
 
@@ -382,31 +411,17 @@
     }
 
     async function sendToGoogleDrive(payloadData) {
-        if (!GOOGLE_SCRIPT_URL) {
-            showPopup("URL da Nuvem ausente!", "error");
-            return false;
-        }
+        if (!GOOGLE_SCRIPT_URL) return false;
         const CHUNK_SIZE = 50; 
         for (let i = 0; i < Math.ceil(payloadData.length / CHUNK_SIZE); i++) {
             const chunk = payloadData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
             try { 
                 await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(chunk) }); 
             } catch (e) {
-                console.error(e);
                 return false;
             }
         }
         return true;
-    }
-
-    async function exportToGoogleDriveManual() {
-        const dbList = await getAllFromDB("historico");
-        if (dbList.length === 0) return showPopup("Sem dados!", "error");
-        if (confirm(`Sincronizar todos os ${dbList.length} registos com a Nuvem?`)) { 
-            showPopup("A sincronizar...", "info");
-            if (await sendToGoogleDrive(dbList)) showPopup("Sincronizado com sucesso!", "success"); 
-            else showPopup("Erro de ligação!", "error");
-        }
     }
 
     function updateUI() {
@@ -475,7 +490,7 @@
                 playBeep(150, 0.5); showPopup("Faltam dados no cabeçalho!", "error"); return;
             }
 
-            // --- BLOQUEIO AUTOMÁTICO SE FALHAR O PADRÃO APRENDIDO ---
+            // --- VALIDAÇÃO CONTRA O PADRÃO HISTÓRICO DA NUVEM ---
             if (currentRefPattern) {
                 const scannedPrefix = dm.substring(0, currentRefPattern.prefix.length);
                 if (Math.abs(dm.length - currentRefPattern.length) > 2 || scannedPrefix !== currentRefPattern.prefix) {
@@ -527,8 +542,11 @@
         const targetQty = parseInt(document.getElementById('quantidade').value);
         await saveBuffers(); updateUI(); focusDM();
 
-        if(bufferOK.length >= targetQty) { currentLoteType = "OK"; playBeep(880, 0.1); setTimeout(() => playBeep(880, 0.1), 150); openFechoModal(); }
-        else if(bufferNOK.length >= targetQty) { currentLoteType = "NOK"; playBeep(880, 0.1); setTimeout(() => playBeep(880, 0.1), 150); openFechoModal(); }
+        if(bufferOK.length >= targetQty || bufferNOK.length >= targetQty) { 
+            currentLoteType = bufferOK.length >= targetQty ? "OK" : "NOK"; 
+            playBeep(880, 0.1); setTimeout(() => playBeep(880, 0.1), 150); 
+            openFechoModal(); 
+        }
     }
 
     function openFechoModal() {
@@ -546,7 +564,6 @@
         const lote = (currentLoteType === "OK") ? bufferOK : bufferNOK;
         for (let i of lote) { i.etiqueta = etiq; i.data_producao = data; await savePieceToHist(i); }
 
-        // Envia automaticamente para a nuvem em plano secundário
         sendToGoogleDrive(lote);
         
         if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
@@ -558,7 +575,7 @@
         document.getElementById('modal-fecho').style.display = 'none';
         document.getElementById('etiq-final').value = ""; 
         updateUI(); 
-        showPopup("Lote Fechado e Sincronizado!"); 
+        showPopup("Lote Finalizado!"); 
         focusDM();
     }
 
@@ -628,7 +645,16 @@
 
     window.onload = async () => { 
         updateClock(); 
-        try { await initIndexedDB(); updateDatalists(); updateUI(); focusDM(); } catch(e) { showPopup("Erro DB!", "error"); }
+        try { 
+            await initIndexedDB(); 
+            updateDatalists(); 
+            updateUI(); 
+            focusDM();
+            // Descarrega os padrões e dados do Google Sheets assim que abre a app
+            await syncFromCloud(); 
+        } catch(e) { 
+            showPopup("Erro DB!", "error"); 
+        }
     };
 </script>
 </body>
