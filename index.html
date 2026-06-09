@@ -124,7 +124,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v3.6.0-CloudSync</span>
+            <span class="version-text">v3.7.0-SmartMatch & CloudSync</span>
         </div>
     </header>
 
@@ -252,7 +252,6 @@
         navigator.serviceWorker.register(dataUrl).catch(err => console.log(err));
     }
 
-    // --- URL DO GOOGLE APPS SCRIPT CONFIGURADO ---
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQC6nPrt4Iz0vEtzEFUdesHgfu85nXfARIWDStKARPymOHCAs7I7axiHV9D6VgZmYF/exec";
 
     let dbInstance = null;
@@ -260,6 +259,8 @@
     let bufferOK = [];
     let bufferNOK = [];
     let tempDM = null, currentLoteType = "";
+    
+    // Agora o padrão guarda o prefixo longo (ex: 111103561) e o sufixo estrutural
     let currentRefPattern = null; 
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -308,7 +309,6 @@
     async function savePieceToHist(item) { const tx = dbInstance.transaction(["historico"], "readwrite"); tx.objectStore("historico").put(item); }
     async function clearStore(store) { const tx = dbInstance.transaction([store], "readwrite"); tx.objectStore(store).clear(); }
 
-    // --- NOVA FUNÇÃO: SINCRONIZAÇÃO DIRETA DA NUVEM PARA A BASE DE DADOS LOCAL ---
     async function syncFromCloud() {
         if (!GOOGLE_SCRIPT_URL) return;
         try {
@@ -323,7 +323,6 @@
                 cloudRecords.forEach(item => {
                     if (item.dm) {
                         store.put(item);
-                        // Reconstrói listas inteligentes dinâmicas na memória global
                         if (item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
                         if (item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
                         if (item.ref && !memory.refs[item.ref]) memory.refs[item.ref] = "100";
@@ -342,7 +341,7 @@
         await learnReferencePattern(activeRef);
     }
 
-    // --- ALGORITMO DE APRENDIZAGEM INTELIGENTE (HÍBRIDO NUVEM + LOCAL) ---
+    // --- ALGORITMO DE APRENDIZAGEM AVANÇADO (EVITA MISTURA DE CÓDIGOS SEMELHANTES) ---
     async function learnReferencePattern(refVal) {
         refVal = refVal.toUpperCase().trim();
         const patternInfoSpan = document.getElementById('pattern-info');
@@ -353,37 +352,47 @@
             return;
         }
 
-        // 1. Pesquisa no banco local unificado (que agora já inclui o que veio do Sheets)
         const allHist = await getAllFromDB("historico");
         const matches = allHist.filter(p => p.ref === refVal);
 
         if (matches.length >= 2) {
             const firstDM = matches[0].dm;
             const targetLen = firstDM.length;
-            const targetPrefix = firstDM.substring(0, Math.min(4, targetLen));
+            
+            // Analisa os primeiros 9 caracteres (apanha o código da peça completo, ex: 111103561 vs 111108473)
+            const targetPrefix = firstDM.substring(0, Math.min(9, targetLen));
+            
+            // Analisa o formato estrutural do final (se contém pontos, traços ou espaços no último terço da string)
+            const structuralTail = firstDM.substring(Math.floor(targetLen * 0.7)).replace(/[A-Z0-9]/g, '');
 
-            const isConsistent = matches.every(p => p.dm.length === targetLen && p.dm.startsWith(targetPrefix));
+            const isConsistent = matches.every(p => {
+                const pTail = p.dm.substring(Math.floor(p.dm.length * 0.7)).replace(/[A-Z0-9]/g, '');
+                return p.dm.length === targetLen && p.dm.startsWith(targetPrefix) && pTail === structuralTail;
+            });
 
             if (isConsistent) {
-                currentRefPattern = { length: targetLen, prefix: targetPrefix, source: "Nuvem/Histórico" };
-                patternInfoSpan.innerText = `Padrão Ativo: ${targetLen} carateres (Início: "${targetPrefix}")`;
+                currentRefPattern = { length: targetLen, prefix: targetPrefix, tailStructure: structuralTail, source: "Nuvem/Histórico" };
+                patternInfoSpan.innerText = `Padrão Ativo: ${targetLen} carateres (Identificador: "${targetPrefix}")`;
                 focusDM();
                 return;
             }
         }
 
-        // 2. Fallback temporário para o lote corrente
         const currentBatch = [...bufferOK, ...bufferNOK];
         if (currentBatch.length > 0) {
             const firstDM = currentBatch[0].dm;
-            currentRefPattern = { length: firstDM.length, prefix: firstDM.substring(0, Math.min(4, firstDM.length)), source: "Lote Atual" };
-            patternInfoSpan.innerText = `Padrão Temporário: ${currentRefPattern.length} carateres (Início: "${currentRefPattern.prefix}")`;
+            const targetLen = firstDM.length;
+            const targetPrefix = firstDM.substring(0, Math.min(9, targetLen));
+            const structuralTail = firstDM.substring(Math.floor(targetLen * 0.7)).replace(/[A-Z0-9]/g, '');
+            
+            currentRefPattern = { length: targetLen, prefix: targetPrefix, tailStructure: structuralTail, source: "Lote Atual" };
+            patternInfoSpan.innerText = `Padrão Temporário: ${currentRefPattern.length} carateres (Identificador: "${currentRefPattern.prefix}")`;
             focusDM();
             return;
         }
 
         currentRefPattern = null;
-        patternInfoSpan.innerText = "ℹ️ Referência Nova/Sem Padrão: Formato memorizado na primeira peça.";
+        patternInfoSpan.innerText = "ℹ️ Referência Nova: Formato estrito guardado a partir da 1ª peça.";
         focusDM();
     }
 
@@ -490,22 +499,33 @@
                 playBeep(150, 0.5); showPopup("Faltam dados no cabeçalho!", "error"); return;
             }
 
-            // --- VALIDAÇÃO CONTRA O PADRÃO HISTÓRICO DA NUVEM ---
+            // --- VALIDAÇÃO REFORÇADA CONTRA MISTURA ---
             if (currentRefPattern) {
                 const scannedPrefix = dm.substring(0, currentRefPattern.prefix.length);
-                if (Math.abs(dm.length - currentRefPattern.length) > 2 || scannedPrefix !== currentRefPattern.prefix) {
+                const scannedTailStructure = dm.substring(Math.floor(dm.length * 0.7)).replace(/[A-Z0-9]/g, '');
+
+                // Valida tamanho exato, início estrito de 9 dígitos e padrão de caracteres especiais/espaços
+                if (dm.length !== currentRefPattern.length || 
+                    scannedPrefix !== currentRefPattern.prefix || 
+                    scannedTailStructure !== currentRefPattern.tailStructure) {
+                    
                     playBeep(100, 0.8); 
                     scanArea.className = "scan-area erro-mistura";
-                    showPopup(`⚠️ MISTURA! Esta Ref exige tamanho de ${currentRefPattern.length} com início "${currentRefPattern.prefix}"`, "error");
+                    showPopup(`⚠️ MISTURA DETETADA! Esperado início "${currentRefPattern.prefix}" com tamanho ${currentRefPattern.length}`, "error");
                     
                     setTimeout(() => { 
                         scanArea.className = qNum > 0 && (bufferOK.length >= qNum || bufferNOK.length >= qNum) ? "scan-area lote-cheio" : "scan-area"; 
-                    }, 2000);
+                    }, 2500);
                     return;
                 }
             } else {
-                currentRefPattern = { length: dm.length, prefix: dm.substring(0, Math.min(4, dm.length)), source: "Leitura Inicial" };
-                document.getElementById('pattern-info').innerText = `Padrão Memorizado: ${dm.length} carateres (Início: "${currentRefPattern.prefix}")`;
+                // Primeira peça do lote define o padrão rigoroso se não houver histórico
+                const targetLen = dm.length;
+                const targetPrefix = dm.substring(0, Math.min(9, targetLen));
+                const structuralTail = dm.substring(Math.floor(targetLen * 0.7)).replace(/[A-Z0-9]/g, '');
+                
+                currentRefPattern = { length: targetLen, prefix: targetPrefix, tailStructure: structuralTail, source: "Leitura Inicial" };
+                document.getElementById('pattern-info').innerText = `Padrão Memorizado: ${dm.length} carateres (Identificador: "${currentRefPattern.prefix}")`;
             }
 
             if (bufferOK.some(i => i.dm === dm) || bufferNOK.some(i => i.dm === dm)) { 
@@ -650,7 +670,6 @@
             updateDatalists(); 
             updateUI(); 
             focusDM();
-            // Descarrega os padrões e dados do Google Sheets assim que abre a app
             await syncFromCloud(); 
         } catch(e) { 
             showPopup("Erro DB!", "error"); 
