@@ -32,9 +32,15 @@
         .logo-img { height: 45px; width: auto; object-fit: contain; }
         .version-text { font-size: 10px; font-weight: bold; color: #888; margin-top: 2px; font-family: monospace; }
 
-        #datetime-container { text-align: center; font-family: 'Courier New', Courier, monospace; color: var(--p-dark); line-height: 1.2; }
+        #datetime-container { text-align: center; font-family: 'Courier New', Courier, monospace; color: var(--p-dark); line-height: 1.2; position: relative; }
         #live-date { font-size: 11px; font-weight: bold; display: block; }
         #live-time { font-size: 14px; font-weight: 900; display: block; }
+        
+        /* NOVO: Estilo do Indicador de Conetividade */
+        .drive-status-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-top: 3px; border: 1px solid #ccc; background: #fff; }
+        .drive-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+        .drive-online { background-color: var(--ok); box-shadow: 0 0 6px var(--ok); }
+        .drive-offline { background-color: var(--nok); box-shadow: 0 0 6px var(--nok); }
 
         .tabs { display: flex; gap: 3px; }
         .tab-btn { padding: 8px 12px; border: none; cursor: pointer; background: #ddd; color: #666; font-weight: bold; border-radius: 4px 4px 0 0; font-size: 11px; transition: 0.2s; }
@@ -121,10 +127,14 @@
         <div id="datetime-container">
             <span id="live-date">00/00/0000</span>
             <span id="live-time">00:00:00</span>
+            <div class="drive-status-badge" id="drive-badge">
+                <span class="drive-dot drive-offline" id="drive-dot"></span>
+                <span id="drive-text">DRIVE: OFF</span>
+            </div>
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v3.7.0-SmartMatch & CloudSync</span>
+            <span class="version-text">v3.8.0-CloudCheck</span>
         </div>
     </header>
 
@@ -259,8 +269,6 @@
     let bufferOK = [];
     let bufferNOK = [];
     let tempDM = null, currentLoteType = "";
-    
-    // Agora o padrão guarda o prefixo longo (ex: 111103561) e o sufixo estrutural
     let currentRefPattern = null; 
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -309,12 +317,27 @@
     async function savePieceToHist(item) { const tx = dbInstance.transaction(["historico"], "readwrite"); tx.objectStore("historico").put(item); }
     async function clearStore(store) { const tx = dbInstance.transaction([store], "readwrite"); tx.objectStore(store).clear(); }
 
+    // NOVO: Atualizador visual do estado da conetividade
+    function updateCloudStatus(isOnline) {
+        const dot = document.getElementById('drive-dot');
+        const text = document.getElementById('drive-text');
+        if (isOnline) {
+            dot.className = "drive-dot drive-online";
+            text.innerText = "DRIVE: ON";
+        } else {
+            dot.className = "drive-dot drive-offline";
+            text.innerText = "DRIVE: OFF";
+        }
+    }
+
     async function syncFromCloud() {
-        if (!GOOGLE_SCRIPT_URL) return;
+        if (!GOOGLE_SCRIPT_URL) { updateCloudStatus(false); return; }
         try {
             const response = await fetch(GOOGLE_SCRIPT_URL);
             if (!response.ok) throw new Error();
             const cloudRecords = await response.json();
+            
+            updateCloudStatus(true); // Conetividade OK
             
             if (Array.isArray(cloudRecords) && cloudRecords.length > 0) {
                 const tx = dbInstance.transaction(["historico"], "readwrite");
@@ -334,6 +357,7 @@
                 showPopup(`Nuvem Sincronizada! ${cloudRecords.length} registos carregados.`, "success");
             }
         } catch (e) {
+            updateCloudStatus(false); // Falha de ligação
             console.warn("Modo Offline: Não foi possível descarregar dados atualizados da Nuvem.");
         }
         
@@ -341,7 +365,6 @@
         await learnReferencePattern(activeRef);
     }
 
-    // --- ALGORITMO DE APRENDIZAGEM AVANÇADO (EVITA MISTURA DE CÓDIGOS SEMELHANTES) ---
     async function learnReferencePattern(refVal) {
         refVal = refVal.toUpperCase().trim();
         const patternInfoSpan = document.getElementById('pattern-info');
@@ -358,11 +381,7 @@
         if (matches.length >= 2) {
             const firstDM = matches[0].dm;
             const targetLen = firstDM.length;
-            
-            // Analisa os primeiros 9 caracteres (apanha o código da peça completo, ex: 111103561 vs 111108473)
             const targetPrefix = firstDM.substring(0, Math.min(9, targetLen));
-            
-            // Analisa o formato estrutural do final (se contém pontos, traços ou espaços no último terço da string)
             const structuralTail = firstDM.substring(Math.floor(targetLen * 0.7)).replace(/[A-Z0-9]/g, '');
 
             const isConsistent = matches.every(p => {
@@ -420,17 +439,19 @@
     }
 
     async function sendToGoogleDrive(payloadData) {
-        if (!GOOGLE_SCRIPT_URL) return false;
+        if (!GOOGLE_SCRIPT_URL) { updateCloudStatus(false); return false; }
         const CHUNK_SIZE = 50; 
+        let success = true;
         for (let i = 0; i < Math.ceil(payloadData.length / CHUNK_SIZE); i++) {
             const chunk = payloadData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
             try { 
                 await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(chunk) }); 
             } catch (e) {
-                return false;
+                success = false;
             }
         }
-        return true;
+        updateCloudStatus(success);
+        return success;
     }
 
     function updateUI() {
@@ -499,12 +520,10 @@
                 playBeep(150, 0.5); showPopup("Faltam dados no cabeçalho!", "error"); return;
             }
 
-            // --- VALIDAÇÃO REFORÇADA CONTRA MISTURA ---
             if (currentRefPattern) {
                 const scannedPrefix = dm.substring(0, currentRefPattern.prefix.length);
                 const scannedTailStructure = dm.substring(Math.floor(dm.length * 0.7)).replace(/[A-Z0-9]/g, '');
 
-                // Valida tamanho exato, início estrito de 9 dígitos e padrão de caracteres especiais/espaços
                 if (dm.length !== currentRefPattern.length || 
                     scannedPrefix !== currentRefPattern.prefix || 
                     scannedTailStructure !== currentRefPattern.tailStructure) {
@@ -519,7 +538,6 @@
                     return;
                 }
             } else {
-                // Primeira peça do lote define o padrão rigoroso se não houver histórico
                 const targetLen = dm.length;
                 const targetPrefix = dm.substring(0, Math.min(9, targetLen));
                 const structuralTail = dm.substring(Math.floor(targetLen * 0.7)).replace(/[A-Z0-9]/g, '');
@@ -584,7 +602,7 @@
         const lote = (currentLoteType === "OK") ? bufferOK : bufferNOK;
         for (let i of lote) { i.etiqueta = etiq; i.data_producao = data; await savePieceToHist(i); }
 
-        sendToGoogleDrive(lote);
+        await sendToGoogleDrive(lote);
         
         if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
         await saveBuffers();
