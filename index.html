@@ -13,7 +13,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        /* 1. VARIÁVEIS E GERAL */
         :root { 
             --p: #005596; 
             --p-dark: #0e4c85; 
@@ -55,13 +54,35 @@
         .progress-box { width: 100%; height: 5px; background: rgba(0,0,0,0.15); border-radius: 3px; margin-top: 6px; overflow: hidden; }
         .progress-bar { height: 100%; background: #fff; width: 0%; transition: width 0.3s ease; }
 
-        .scan-area { background: #2c3e50; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 10px; }
+        @keyframes pulse-alert {
+            0% { background-color: #2c3e50; }
+            50% { background-color: #e67e22; }
+            100% { background-color: #2c3e50; }
+        }
+        @keyframes pulse-error {
+            0% { background-color: #c0392b; }
+            50% { background-color: #ff0000; }
+            100% { background-color: #c0392b; }
+        }
+        .scan-area { background: #2c3e50; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 10px; transition: background 0.3s; }
+        .scan-area.lote-cheio { animation: pulse-alert 1.5s infinite; }
+        .scan-area.erro-mistura { animation: pulse-error 0.4s infinite; }
+
         #input-dm { width: 100%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); color: white; font-size: 14px; outline: none; }
+        #ref-badge-indicator { display: inline-block; padding: 2px 8px; background: #e67e22; border-radius: 4px; font-weight: bold; margin-left: 5px; font-size: 11px; }
+        #pattern-info { display: block; font-size: 10px; color: #bdc3c7; margin-top: 4px; font-style: italic; }
 
         .buffer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .buffer-box { background: #fff; border-radius: 6px; height: 250px; display: flex; flex-direction: column; border: 1px solid #eee; overflow: hidden; }
         .buffer-header { color: white; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 10px; min-height: 50px; }
         .btn-mini-finish { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 0 12px; border-radius: 4px; cursor: pointer; height: 44px; min-width: 70px; font-weight: bold; }
+        .btn-mini-finish.piscar { background: #e67e22; animation: pulse-btn 1s infinite; font-size: 12px; border: 2px solid white; }
+        
+        @keyframes pulse-btn {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
 
         .table-wrapper { max-height: 450px; overflow-y: auto; background: white; border-radius: 4px; }
         table { width:100%; border-collapse: collapse; font-size: 10px; }
@@ -77,13 +98,11 @@
         .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
         .buffer-item:hover { background: #fff5f5; color: var(--nok); }
 
-        /* Estilos de Cores para o Status no Histórico */
         .status-badge { font-weight: bold; text-align: center; border-radius: 4px; padding: 3px 6px; display: inline-block; color: white; min-width: 90px; }
         .status-ok { background-color: var(--ok); }
         .status-retrabalhada { background-color: var(--ret); }
         .status-nok { background-color: var(--nok); }
 
-        /* Estilos adicionais para as linhas agrupadas de etiquetas */
         .group-header { background-color: #e6f2ff !important; font-weight: bold; cursor: pointer; user-select: none; }
         .group-header:hover { background-color: #d0e7ff !important; }
         .child-row { display: none; background-color: #fafafa; }
@@ -105,7 +124,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v2.2.2</span>
+            <span class="version-text">v3.0.0</span>
         </div>
     </header>
 
@@ -116,7 +135,7 @@
                     <label>Inspetor</label>
                     <input type="text" id="inspetor" list="dl-inspetores">
                 </div>
-                <div><label>Referência</label><input type="text" id="referencia" list="dl-refs" onchange="autoQty(this.value)"></div>
+                <div><label>Referência</label><input type="text" id="referencia" list="dl-refs" onchange="learnReferencePattern(this.value); updateUI();"></div>
                 <div><label>Missão</label><input type="text" id="missao" list="dl-missoes"></div>
                 <div><label>QTD</label><input type="number" id="quantidade" min="1" onchange="updateUI()"></div>
             </div>
@@ -137,23 +156,24 @@
             </div>
         </div>
 
-        <div class="scan-area">
-            <h3 style="margin:0 0 5px 0; font-size:12px;">DATA MATRIX</h3>
+        <div class="scan-area" id="scan-area-box">
+            <h3 id="scan-title" style="margin:0 0 5px 0; font-size:12px;">DATA MATRIX <span id="ref-badge-indicator" style="display:none;"></span></h3>
             <input type="text" id="input-dm" placeholder="Aguardando leitura..." onkeypress="handleScan(event)">
+            <span id="pattern-info">Sem padrão conhecido para esta referência.</span>
         </div>
 
         <div class="buffer-grid">
             <div class="buffer-box">
                 <div class="buffer-header" style="background: var(--ok);">
                     <span>LISTA OK</span>
-                    <button class="btn-mini-finish" onclick="forceFinish('OK')">FECHAR</button>
+                    <button class="btn-mini-finish" id="btn-fechar-ok" onclick="forceFinish('OK')">FECHAR</button>
                 </div>
                 <div id="ok-list" style="overflow-y:auto; padding:5px; font-size:9px;"></div>
             </div>
             <div class="buffer-box">
                 <div class="buffer-header" style="background: var(--nok);">
                     <span>LISTA NOK</span>
-                    <button class="btn-mini-finish" onclick="forceFinish('NOK')">FECHAR</button>
+                    <button class="btn-mini-finish" id="btn-fechar-nok" onclick="forceFinish('NOK')">FECHAR</button>
                 </div>
                 <div id="nok-list" style="overflow-y:auto; padding:5px; font-size:9px;"></div>
             </div>
@@ -223,55 +243,48 @@
 <script>
     if ('serviceWorker' in navigator) {
         const swCode = `
-            const CACHE_NAME = 'trigo-v17';
-            self.addEventListener('install', e => {
-                e.waitUntil(
-                    caches.open(CACHE_NAME).then(cache => cache.addAll(['./']))
-                    .then(() => self.skipWaiting())
-                );
-            });
-            self.addEventListener('activate', e => {
-                e.waitUntil(self.clients.claim());
-            });
-            self.addEventListener('fetch', e => {
-                e.respondWith(
-                    caches.match(e.request).then(res => res || fetch(e.request))
-                );
-            });
+            const CACHE_NAME = 'trigo-v21';
+            self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['./'])).then(() => self.skipWaiting())); });
+            self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });
+            self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))); });
         `;
         const dataUrl = 'data:text/javascript;base64,' + btoa(unescape(encodeURIComponent(swCode)));
-        navigator.serviceWorker.register(dataUrl)
-            .then(reg => console.log('SW instalado!', reg))
-            .catch(err => console.log('Erro SW:', err));
+        navigator.serviceWorker.register(dataUrl).catch(err => console.log(err));
     }
 
-    // --- CONFIGURAÇÃO GOOGLE DRIVE ---
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDstzmN8YprjUhSMY9Xdq3qFtV72Qhxwb88W7X5yOD3-LHwRtikQ2ZdjX1K9NCjeJqMQ/exec";
-    // ---------------------------------
+    // --- URL DO GOOGLE APPS SCRIPT CONFIGURADO ---
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQC6nPrt4Iz0vEtzEFUdesHgfu85nXfARIWDStKARPymOHCAs7I7axiHV9D6VgZmYF/exec";
 
-    // --- INICIALIZAÇÃO INDEXEDDB ---
     let dbInstance = null;
     let memory = { users:[], refs:{}, missions:[] };
     let bufferOK = [];
     let bufferNOK = [];
     let tempDM = null, currentLoteType = "";
+    
+    // Controlo de Padrões por Referência (Aprendizagem Automática)
+    let currentRefPattern = null; 
+
+    // Sistema de Feedback de Áudio Integrado
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq, duration) {
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.value = freq; gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        } catch(e) {}
+    }
 
     function initIndexedDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open("TrigoDB", 1);
-            
-            request.onerror = (e) => reject("Erro ao abrir IndexedDB");
-            
+            request.onerror = () => reject();
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
-                if (!db.objectStoreNames.contains("historico")) {
-                    db.createObjectStore("historico", { keyPath: "dm" });
-                }
-                if (!db.objectStoreNames.contains("app_state")) {
-                    db.createObjectStore("app_state");
-                }
+                if (!db.objectStoreNames.contains("historico")) db.createObjectStore("historico", { keyPath: "dm" });
+                if (!db.objectStoreNames.contains("app_state")) db.createObjectStore("app_state");
             };
-
             request.onsuccess = async (e) => {
                 dbInstance = e.target.result;
                 await loadStateFromDB();
@@ -280,70 +293,70 @@
         });
     }
 
-    function getFromDB(storeName, key) {
-        return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readonly");
-            const store = transaction.objectStore(storeName);
-            const request = store.get(key);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => resolve(null);
-        });
-    }
-
-    function getAllFromDB(storeName) {
-        return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readonly");
-            const store = transaction.objectStore(storeName);
-            const request = store.getAll();
-            request.onsuccess = () => resolve(request.result || []);
-            request.onerror = () => resolve([]);
-        });
-    }
-
-    function saveToDB(storeName, key, value) {
-        return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readwrite");
-            const store = transaction.objectStore(storeName);
-            const request = store.put(value, key);
-            request.onsuccess = () => resolve(true);
-            request.onerror = () => resolve(false);
-        });
-    }
-
-    function savePieceToHist(item) {
-        return new Promise((resolve) => {
-            const transaction = dbInstance.transaction(["historico"], "readwrite");
-            const store = transaction.objectStore("historico");
-            const request = store.put(item);
-            request.onsuccess = () => resolve(true);
-            request.onerror = () => resolve(false);
-        });
-    }
-
-    function clearStore(storeName) {
-        return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readwrite");
-            const store = transaction.objectStore(storeName);
-            const request = store.clear();
-            request.onsuccess = () => resolve(true);
-        });
-    }
-
     async function loadStateFromDB() {
         memory = await getFromDB("app_state", "memory") || { users:[], refs:{}, missions:[] };
         const savedBuffers = await getFromDB("app_state", "buffers") || { ok: [], nok: [] };
         bufferOK = savedBuffers.ok || [];
         bufferNOK = savedBuffers.nok || [];
+        
+        const activeRef = document.getElementById('referencia').value.toUpperCase().trim();
+        if (activeRef) await learnReferencePattern(activeRef);
     }
 
-    async function saveBuffers() { 
-        await saveToDB("app_state", "buffers", { ok: bufferOK, nok: bufferNOK }); 
-    }
+    async function saveBuffers() { await saveToDB("app_state", "buffers", { ok: bufferOK, nok: bufferNOK }); }
+    async function saveMemory() { await saveToDB("app_state", "memory", memory); }
+    function getFromDB(store, key) { return new Promise(res => { const tx = dbInstance.transaction([store], "readonly"); const req = tx.objectStore(store).get(key); req.onsuccess = () => res(req.result); }); }
+    function saveToDB(store, key, val) { return new Promise(res => { const tx = dbInstance.transaction([store], "readwrite"); const req = tx.objectStore(store).put(val, key); req.onsuccess = () => res(true); }); }
+    async function getAllFromDB(store) { return new Promise(res => { const tx = dbInstance.transaction([store], "readonly"); const req = tx.objectStore(store).getAll(); req.onsuccess = () => res(req.result || []); }); }
+    async function savePieceToHist(item) { const tx = dbInstance.transaction(["historico"], "readwrite"); tx.objectStore("historico").put(item); }
+    async function clearStore(store) { const tx = dbInstance.transaction([store], "readwrite"); tx.objectStore(store).clear(); }
 
-    async function saveMemory() {
-        await saveToDB("app_state", "memory", memory);
+    // --- ALGORITMO DE APRENDIZAGEM INTELIGENTE ---
+    async function learnReferencePattern(refVal) {
+        refVal = refVal.toUpperCase().trim();
+        const patternInfoSpan = document.getElementById('pattern-info');
+        
+        if (!refVal) {
+            currentRefPattern = null;
+            patternInfoSpan.innerText = "Aguardando seleção de referência...";
+            return;
+        }
+
+        // 1. Procurar peças históricas validadas no IndexedDB desta referência
+        const allHist = await getAllFromDB("historico");
+        const matches = allHist.filter(p => p.ref === refVal);
+
+        if (matches.length >= 2) {
+            const firstDM = matches[0].dm;
+            const targetLen = firstDM.length;
+            const targetPrefix = firstDM.substring(0, Math.min(4, targetLen));
+
+            // Confirma se o histórico mantém consistência de tamanho e prefixo
+            const isConsistent = matches.every(p => p.dm.length === targetLen && p.dm.startsWith(targetPrefix));
+
+            if (isConsistent) {
+                currentRefPattern = { length: targetLen, prefix: targetPrefix, source: "Histórico Aprendido" };
+                patternInfoSpan.innerText = `Padrão Ativo: ${targetLen} carateres (Início: "${targetPrefix}")`;
+                focusDM();
+                return;
+            }
+        }
+
+        // 2. Se não houver histórico, aprende com as leituras temporárias em curso no lote atual
+        const currentBatch = [...bufferOK, ...bufferNOK];
+        if (currentBatch.length > 0) {
+            const firstDM = currentBatch[0].dm;
+            currentRefPattern = { length: firstDM.length, prefix: firstDM.substring(0, Math.min(4, firstDM.length)), source: "Lote Atual" };
+            patternInfoSpan.innerText = `Padrão Temporário: ${currentRefPattern.length} carateres (Início: "${currentRefPattern.prefix}")`;
+            focusDM();
+            return;
+        }
+
+        // 3. Caso seja um produto novo
+        currentRefPattern = null;
+        patternInfoSpan.innerText = "ℹ️ Referência Nova: O formato será memorizado no primeiro registo.";
+        focusDM();
     }
-    // ---------------------------------
 
     function updateClock() {
         const now = new Date();
@@ -369,36 +382,18 @@
     }
 
     async function sendToGoogleDrive(payloadData) {
-        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("COLE_AQUI")) {
-            console.warn("URL do Google Script não configurado.");
+        if (!GOOGLE_SCRIPT_URL) {
+            showPopup("URL da Nuvem ausente!", "error");
             return false;
         }
-
         const CHUNK_SIZE = 50; 
-        const totalItems = payloadData.length;
-        const totalChunks = Math.ceil(totalItems / CHUNK_SIZE);
-
-        for (let i = 0; i < totalChunks; i++) {
-            const start = i * CHUNK_SIZE;
-            const end = start + CHUNK_SIZE;
-            const chunk = payloadData.slice(start, end);
-
-            showPopup(`Nuvem: A sincronizar lote ${i + 1} de ${totalChunks}...`, "info");
-
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(chunk)
-                });
-                
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-            } catch (error) {
-                console.error(`Erro no lote ${i + 1}:`, error);
-                showPopup(`Falha no lote ${i + 1}. Operação cancelada!`, "error");
-                return false; 
+        for (let i = 0; i < Math.ceil(payloadData.length / CHUNK_SIZE); i++) {
+            const chunk = payloadData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+            try { 
+                await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(chunk) }); 
+            } catch (e) {
+                console.error(e);
+                return false;
             }
         }
         return true;
@@ -406,38 +401,55 @@
 
     async function exportToGoogleDriveManual() {
         const dbList = await getAllFromDB("historico");
-        if (dbList.length === 0) {
-            showPopup("Não existem dados no Histórico para exportar!", "error");
-            return;
-        }
-        
-        if (confirm(`Deseja exportar todos os ${dbList.length} registos do Histórico para o Google Drive de forma segura (em lotes)?`)) {
-            const sucesso = await sendToGoogleDrive(dbList);
-            if (sucesso) {
-                showPopup("Todo o Histórico foi sincronizado com sucesso!", "success");
-            }
+        if (dbList.length === 0) return showPopup("Sem dados!", "error");
+        if (confirm(`Sincronizar todos os ${dbList.length} registos com a Nuvem?`)) { 
+            showPopup("A sincronizar...", "info");
+            if (await sendToGoogleDrive(dbList)) showPopup("Sincronizado com sucesso!", "success"); 
+            else showPopup("Erro de ligação!", "error");
         }
     }
 
     function updateUI() {
         const qVal = document.getElementById('quantidade').value;
         const qNum = parseInt(qVal) || 0;
-        const pOK = qNum > 0 ? Math.round((bufferOK.length / qNum) * 100) : 0;
-        const pNOK = qNum > 0 ? Math.round((bufferNOK.length / qNum) * 100) : 0;
+        const refVal = document.getElementById('referencia').value.toUpperCase().trim();
+        
         document.getElementById('ui-ok').innerText = `${bufferOK.length} / ${qVal || '-'}`;
         document.getElementById('ui-nok').innerText = `${bufferNOK.length} / ${qVal || '-'}`;
-        document.getElementById('perc-ok').innerText = `${pOK}%`;
-        document.getElementById('perc-nok').innerText = `${pNOK}%`;
-        document.getElementById('bar-ok').style.width = Math.min(pOK, 100) + "%";
-        document.getElementById('bar-nok').style.width = Math.min(pNOK, 100) + "%";
-        document.getElementById('ok-list').innerHTML = bufferOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">${i.dm} <small>(${i.status}) - ${i.hora || ''}</small></div>`).reverse().join('');
-        document.getElementById('nok-list').innerHTML = bufferNOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">${i.dm} <small>- ${i.hora || ''}</small></div>`).reverse().join('');
+        document.getElementById('perc-ok').innerText = qNum > 0 ? Math.round((bufferOK.length / qNum) * 100) + "%" : "0%";
+        document.getElementById('perc-nok').innerText = qNum > 0 ? Math.round((bufferNOK.length / qNum) * 100) + "%" : "0%";
+        document.getElementById('bar-ok').style.width = qNum > 0 ? Math.min((bufferOK.length / qNum) * 100, 100) + "%" : "0%";
+        document.getElementById('bar-nok').style.width = qNum > 0 ? Math.min((bufferNOK.length / qNum) * 100, 100) + "%" : "0%";
+        
+        document.getElementById('ok-list').innerHTML = bufferOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">${i.dm} <small>(${i.status})</small></div>`).reverse().join('');
+        document.getElementById('nok-list').innerHTML = bufferNOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">${i.dm}</div>`).reverse().join('');
+
+        const scanArea = document.getElementById('scan-area-box');
+        const scanTitle = document.getElementById('scan-title');
+        const badge = document.getElementById('ref-badge-indicator');
+
+        if(refVal) { badge.innerText = refVal; badge.style.display = "inline-block"; } else { badge.style.display = "none"; }
+
+        if (qNum > 0 && (bufferOK.length >= qNum || bufferNOK.length >= qNum)) {
+            scanArea.className = "scan-area lote-cheio";
+            scanTitle.innerText = "⚠️ LOTE COMPLETO! SUBSCREVA A ETIQUETA!";
+            document.getElementById('btn-fechar-ok').className = "btn-mini-finish " + (bufferOK.length >= qNum ? "piscar" : "");
+            document.getElementById('btn-fechar-nok').className = "btn-mini-finish " + (bufferNOK.length >= qNum ? "piscar" : "");
+        } else {
+            scanArea.className = "scan-area";
+            scanTitle.innerHTML = `DATA MATRIX`;
+            document.getElementById('btn-fechar-ok').className = "btn-mini-finish";
+            document.getElementById('btn-fechar-nok').className = "btn-mini-finish";
+        }
     }
 
     async function removeFromBuffer(type, idx) {
         if(confirm("Remover esta peça?")) {
             if(type === 'OK') bufferOK.splice(idx, 1); else bufferNOK.splice(idx, 1);
-            await saveBuffers(); updateUI();
+            await saveBuffers(); 
+            const refVal = document.getElementById('referencia').value;
+            await learnReferencePattern(refVal);
+            updateUI();
         }
     }
 
@@ -446,10 +458,45 @@
             const dm = e.target.value.trim().toUpperCase(); 
             e.target.value = "";
             if(!dm) return;
-            if (bufferOK.some(i => i.dm === dm) || bufferNOK.some(i => i.dm === dm)) { showPopup("Já existe no buffer atual!", "error"); return; }
-            if(!document.getElementById('referencia').value || !document.getElementById('quantidade').value || !document.getElementById('inspetor').value) {
-                showPopup("Falta Inspetor, Ref ou QTD!", "error"); return;
+
+            const qNum = parseInt(document.getElementById('quantidade').value) || 0;
+            const scanArea = document.getElementById('scan-area-box');
+            const activeRef = document.getElementById('referencia').value.toUpperCase().trim();
+
+            if (qNum > 0 && (bufferOK.length >= qNum || bufferNOK.length >= qNum)) {
+                currentLoteType = bufferOK.length >= qNum ? "OK" : "NOK";
+                openFechoModal();
+                document.getElementById('etiq-final').value = dm;
+                playBeep(440, 0.1);
+                return;
             }
+
+            if(!activeRef || !document.getElementById('quantidade').value || !document.getElementById('inspetor').value) {
+                playBeep(150, 0.5); showPopup("Faltam dados no cabeçalho!", "error"); return;
+            }
+
+            // --- BLOQUEIO AUTOMÁTICO SE FALHAR O PADRÃO APRENDIDO ---
+            if (currentRefPattern) {
+                const scannedPrefix = dm.substring(0, currentRefPattern.prefix.length);
+                if (Math.abs(dm.length - currentRefPattern.length) > 2 || scannedPrefix !== currentRefPattern.prefix) {
+                    playBeep(100, 0.8); 
+                    scanArea.className = "scan-area erro-mistura";
+                    showPopup(`⚠️ MISTURA! Esta Ref exige tamanho de ${currentRefPattern.length} com início "${currentRefPattern.prefix}"`, "error");
+                    
+                    setTimeout(() => { 
+                        scanArea.className = qNum > 0 && (bufferOK.length >= qNum || bufferNOK.length >= qNum) ? "scan-area lote-cheio" : "scan-area"; 
+                    }, 2000);
+                    return;
+                }
+            } else {
+                currentRefPattern = { length: dm.length, prefix: dm.substring(0, Math.min(4, dm.length)), source: "Leitura Inicial" };
+                document.getElementById('pattern-info').innerText = `Padrão Memorizado: ${dm.length} carateres (Início: "${currentRefPattern.prefix}")`;
+            }
+
+            if (bufferOK.some(i => i.dm === dm) || bufferNOK.some(i => i.dm === dm)) { 
+                playBeep(150, 0.5); showPopup("Esta peça já existe no lote!", "error"); return; 
+            }
+
             tempDM = dm;
             document.getElementById('dm-display').innerText = dm;
             document.getElementById('modal-status').style.display = 'flex';
@@ -472,16 +519,16 @@
         if(item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
         memory.refs[item.ref] = document.getElementById('quantidade').value;
         
-        await saveMemory();
-        updateDatalists();
+        await saveMemory(); updateDatalists();
         document.getElementById('modal-status').style.display = 'none';
+        
         if(status === 'OK' || status === 'RETRABALHADA') bufferOK.push(item); else bufferNOK.push(item);
         
         const targetQty = parseInt(document.getElementById('quantidade').value);
-        if(bufferOK.length >= targetQty) { currentLoteType = "OK"; openFechoModal(); }
-        else if(bufferNOK.length >= targetQty) { currentLoteType = "NOK"; openFechoModal(); }
-        
         await saveBuffers(); updateUI(); focusDM();
+
+        if(bufferOK.length >= targetQty) { currentLoteType = "OK"; playBeep(880, 0.1); setTimeout(() => playBeep(880, 0.1), 150); openFechoModal(); }
+        else if(bufferNOK.length >= targetQty) { currentLoteType = "NOK"; playBeep(880, 0.1); setTimeout(() => playBeep(880, 0.1), 150); openFechoModal(); }
     }
 
     function openFechoModal() {
@@ -494,24 +541,24 @@
     async function confirmFinishLote() {
         const etiq = document.getElementById('etiq-final').value.trim();
         const data = document.getElementById('data-fecho-lote').value;
-        if(!etiq || !data) { showPopup("Faltam dados!", "error"); return; }
+        if(!etiq || !data) return showPopup("Faltam dados!", "error");
         
         const lote = (currentLoteType === "OK") ? bufferOK : bufferNOK;
+        for (let i of lote) { i.etiqueta = etiq; i.data_producao = data; await savePieceToHist(i); }
+
+        // Envia automaticamente para a nuvem em plano secundário
+        sendToGoogleDrive(lote);
         
-        for (let i of lote) {
-            i.etiqueta = etiq; 
-            i.data_producao = data; 
-            await savePieceToHist(i);
-        }
-
-        await sendToGoogleDrive(lote);
-
         if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
-        await saveBuffers(); 
+        await saveBuffers();
+        
+        const refVal = document.getElementById('referencia').value;
+        await learnReferencePattern(refVal);
+        
         document.getElementById('modal-fecho').style.display = 'none';
         document.getElementById('etiq-final').value = ""; 
         updateUI(); 
-        showPopup("Lote Finalizado e Processado!"); 
+        showPopup("Lote Fechado e Sincronizado!"); 
         focusDM();
     }
 
@@ -519,7 +566,6 @@
     function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; focusDM(); }
     function forceFinish(type) { if((type === 'OK' ? bufferOK : bufferNOK).length > 0) { currentLoteType = type; openFechoModal(); } }
     function focusDM() { document.getElementById('input-dm').focus(); }
-    function autoQty(val) { focusDM(); }
 
     function updateDatalists() {
         document.getElementById('dl-inspetores').innerHTML = memory.users.map(u => `<option value="${u}">`).join('');
@@ -527,12 +573,7 @@
         document.getElementById('dl-missoes').innerHTML = memory.missions.map(m => `<option value="${m}">`).join('');
     }
 
-    function toggleEtiquetaGroup(id) {
-        const rows = document.querySelectorAll(`.child-of-${id}`);
-        rows.forEach(row => {
-            row.style.display = (row.style.display === 'table-row') ? 'none' : 'table-row';
-        });
-    }
+    function toggleEtiquetaGroup(id) { document.querySelectorAll(`.child-of-${id}`).forEach(row => { row.style.display = (row.style.display === 'table-row') ? 'none' : 'table-row'; }); }
 
     async function renderHist() {
         const fi = document.getElementById('f-insp').value;
@@ -544,100 +585,50 @@
         const filtered = dbList.filter(p => (fi==="" || p.insp===fi) && (fr==="" || p.ref===fr) && (fs==="" || p.status===fs) && (fdm==="" || p.dm.includes(fdm)));
         
         document.getElementById('hist-counter').innerText = `Registos: ${filtered.length}`;
-
-        // Agrupamento por Etiqueta mantendo a ordem inversa dos registos originais
-        const groups = {};
-        const orderedEtiquetas = [];
+        const groups = {}; const orderedEtiquetas = [];
         
         filtered.slice().reverse().forEach(p => {
             const etiq = p.etiqueta || "SEM_ETIQUETA";
-            if (!groups[etiq]) {
-                groups[etiq] = [];
-                orderedEtiquetas.push(etiq);
-            }
+            if (!groups[etiq]) { groups[etiq] = []; orderedEtiquetas.push(etiq); }
             groups[etiq].push(p);
         });
 
         let html = '';
         orderedEtiquetas.forEach((etiq, groupIdx) => {
             const items = groups[etiq];
-            const totalCount = items.length;
-            const cleanEtiq = etiq === "SEM_ETIQUETA" ? "Sem Etiqueta" : etiq;
-
-            // Linha Mãe do Submenu (Agrupamento por Etiqueta)
             html += `<tr class="group-header" onclick="toggleEtiquetaGroup('${groupIdx}')">
-                <td colspan="6" style="padding: 10px; font-size: 11px;">📁 Etiqueta: <strong>${cleanEtiq}</strong></td>
-                <td colspan="2" style="padding: 10px; text-align: right; font-size: 11px;"><strong>(${totalCount}) Peças</strong></td>
+                <td colspan="6" style="padding: 10px;">📁 Etiqueta: <strong>${etiq === "SEM_ETIQUETA" ? "Sem Etiqueta" : etiq}</strong></td>
+                <td colspan="2" style="padding: 10px; text-align: right;"><strong>(${items.length}) Peças</strong></td>
             </tr>`;
-
-            // Linhas Filhas (Itens em Submenu)
             items.forEach(p => {
-                let statusClass = '';
-                if (p.status === 'OK') statusClass = 'status-ok';
-                else if (p.status === 'RETRABALHADA') statusClass = 'status-retrabalhada';
-                else if (p.status === 'NOK') statusClass = 'status-nok';
-
+                let sCls = p.status === 'OK' ? 'status-ok' : (p.status === 'RETRABALHADA' ? 'status-retrabalhada' : 'status-nok');
                 html += `<tr class="child-row child-of-${groupIdx}">
-                    <td>${p.hora || ''}</td>
-                    <td>${p.data_producao || ''}</td>
-                    <td>${p.insp || ''}</td>
-                    <td>${p.ref || ''}</td>
-                    <td>${p.missao || ''}</td>
-                    <td>${p.dm || ''}</td>
-                    <td>${p.etiqueta || ''}</td>
-                    <td><span class="status-badge ${statusClass}">${p.status || ''}</span></td>
+                    <td>${p.hora || ''}</td><td>${p.data_producao || ''}</td><td>${p.insp || ''}</td><td>${p.ref || ''}</td><td>${p.missao || ''}</td><td>${p.dm || ''}</td><td>${p.etiqueta || ''}</td><td><span class="status-badge ${sCls}">${p.status || ''}</span></td>
                 </tr>`;
             });
         });
-
         document.getElementById('tbody-hist').innerHTML = html;
     }
 
     async function updateFilterOptions() {
         const dbList = await getAllFromDB("historico");
-        const insps = [...new Set(dbList.map(i => i.insp).filter(Boolean))];
-        const refs = [...new Set(dbList.map(i => i.ref).filter(Boolean))];
-        document.getElementById('f-insp').innerHTML = '<option value="">Todos</option>' + insps.map(i => `<option value="${i}">${i}</option>`).join('');
-        document.getElementById('f-ref').innerHTML = '<option value="">Todas</option>' + refs.map(r => `<option value="${r}">${r}</option>`).join('');
+        document.getElementById('f-insp').innerHTML = '<option value="">Todos</option>' + [...new Set(dbList.map(i => i.insp).filter(Boolean))].map(i => `<option value="${i}">${i}</option>`).join('');
+        document.getElementById('f-ref').innerHTML = '<option value="">Todas</option>' + [...new Set(dbList.map(i => i.ref).filter(Boolean))].map(r => `<option value="${r}">${r}</option>`).join('');
     }
 
     async function exportExcel() {
         const dbList = await getAllFromDB("historico");
-        
-        const formattedList = dbList.map(item => ({
-            "Data/Hora Registo": item.hora || "",
-            "Data Production": item.data_producao || "",
-            "Inspetor": item.insp || "",
-            "Referência": item.ref || "",
-            "Missão": item.missao || "",
-            "Data Matrix": item.dm || "",
-            "Etiqueta": item.etiqueta || "",
-            "Status": item.status || ""
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(formattedList);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Dados");
-        XLSX.writeFile(wb, "Traca_Export.xlsx");
+        const ws = XLSX.utils.json_to_sheet(dbList.map(i => ({ "Data/Hora Registo": i.hora, "Data Production": i.data_producao, "Inspetor": i.insp, "Referência": i.ref, "Missão": i.missao, "Data Matrix": i.dm, "Etiqueta": i.etiqueta, "Status": i.status })));
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Dados"); XLSX.writeFile(wb, "Traca_Export.xlsx");
     }
 
     async function clearHistorySecure() { 
-        if(confirm("Limpar tudo localmente?") && prompt("Digite APAGAR") === "APAGAR") { 
-            await clearStore("historico");
-            await renderHist(); 
-        } 
+        if(confirm("Limpar local?") && prompt("Digite APAGAR") === "APAGAR") { await clearStore("historico"); await learnReferencePattern(document.getElementById('referencia').value); await renderHist(); } 
     }
 
     window.onload = async () => { 
         updateClock(); 
-        try {
-            await initIndexedDB();
-            updateDatalists(); 
-            updateUI(); 
-            focusDM(); 
-        } catch(e) {
-            showPopup("Erro ao iniciar base de dados interna!", "error");
-        }
+        try { await initIndexedDB(); updateDatalists(); updateUI(); focusDM(); } catch(e) { showPopup("Erro DB!", "error"); }
     };
 </script>
 </body>
