@@ -455,27 +455,29 @@
             lucide.createIcons();
         }
 
-        async function sendToGoogleDrive(payload) {
-            const indicator = document.getElementById('cloud-indicator');
-            indicator.innerText = "⏳ A sincronizar...";
-            indicator.className = "cloud-status text-primary";
+async function sendToGoogleDrive(payload) {
+    const indicator = document.getElementById('cloud-indicator');
+    indicator.innerText = "⏳ A sincronizar...";
+    indicator.className = "cloud-status text-primary";
 
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', 
-                    cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                indicator.innerText = "✅ Sincronizado com o Drive";
-                indicator.className = "cloud-status text-success";
-            } catch (error) {
-                console.error("Erro ao enviar para o Drive:", error);
-                indicator.innerText = "❌ Erro Drive (Guardado Local)";
-                indicator.className = "cloud-status text-danger";
-            }
-        }
+    // Criar cópia sem o ID para enviar
+    const { id, ...dataToSend } = payload;
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', 
+            cache: 'no-cache',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataToSend)
+        });
+        indicator.innerText = "✅ Sincronizado";
+        indicator.className = "cloud-status text-success";
+    } catch (error) {
+        indicator.innerText = "❌ Erro Drive";
+        indicator.className = "cloud-status text-danger";
+    }
+}
         
         // Nova Função para Exportar em Lote (SYNC ALL)
         async function exportBatchToDrive() {
