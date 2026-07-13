@@ -3,704 +3,659 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRIGO - Jaula Zona NOK</title>
+    
+    <script>
+        // 1. Gerar Manifest dinamicamente
+        const manifest = {
+            "name": "TRIGO - Jaula Zona NOK",
+            "short_name": "TRIGO Jaula NOK",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#f4f7f6",
+            "theme_color": "#005596",
+            "icons": [{
+                "src": "https://github.com/user-attachments/assets/b103c8f0-8ace-4243-88dd-1e4d0e165297",
+                "sizes": "512x512",
+                "type": "image/png"
+            }]
+        };
+        const manifestStr = JSON.stringify(manifest);
+        const blob = new Blob([manifestStr], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blob);
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestURL;
+        document.head.appendChild(link);
+
+        // 2. Registar Service Worker Inline
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'trigo-v1';
+                const ASSETS = [
+                    './',
+                    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
+                    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
+                    'https://unpkg.com/lucide@latest',
+                    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+                ];
+                self.addEventListener('install', e => {
+                    e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+                });
+                self.addEventListener('fetch', e => {
+                    e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+                });
+            `;
+            const swBlob = new Blob([swCode], {type: 'text/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(swBlob));
+        }
+    </script>
+
     <meta name="theme-color" content="#005596">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>TRIGO - Rastreabilidade Peças PTCNT</title>
-    
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2dpdGh1Yi5jb20vdXNlci1hdHRhY2htZW50cy9hc3NldHMvNzg3OTAwNzEtOTNmMi00ZGU3LThkYjQtZGNiOGNjMjhiNDViIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9LAogICAgewogICAgICAic3JjIjogImh0dHBzOi8vZ2l0aHViLmNvbS91c2VyLWF0dGFjaG1lbnRzL2Fzc2V0cy83ODc5MDA3MS05M2YyLTRkZTctOWRiNC1kY2I4Y2MyOGI0NWIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIKICAgIH0KICBdCn0=">
-    
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2649/2649223.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
     <style>
         :root { 
-            --p: #005596; 
-            --p-dark: #0e4c85; 
-            --ok: #27ae60; 
-            --nok: #c0392b; 
-            --ret: #f39c12; 
-            --bg: #f4f7f6;
-            --trigo-green: #97d700;
+            --p: #005596; --p-dark: #0e4c85; --ok: #27ae60; --nok: #c0392b; 
+            --ret: #f39c12; --bg: #f4f7f6; --trigo-green: #97d700;
         }
-        
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 5px; color: #333; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        
-        .logo-container { display: flex; flex-direction: column; align-items: flex-end; }
-        .logo-img { height: 45px; width: auto; object-fit: contain; }
-        .version-text { font-size: 10px; font-weight: bold; color: #888; margin-top: 2px; font-family: monospace; }
-
-        #datetime-container { text-align: center; font-family: 'Courier New', Courier, monospace; color: var(--p-dark); line-height: 1.2; position: relative; }
-        #live-date { font-size: 11px; font-weight: bold; display: block; }
-        #live-time { font-size: 14px; font-weight: 900; display: block; }
-        
-        .drive-status-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-top: 3px; border: 1px solid #ccc; background: #fff; }
-        .drive-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-        .drive-online { background-color: var(--ok); box-shadow: 0 0 6px var(--ok); }
-        .drive-offline { background-color: var(--nok); box-shadow: 0 0 6px var(--nok); }
-
-        .tabs { display: flex; gap: 3px; }
-        .tab-btn { padding: 8px 12px; border: none; cursor: pointer; background: #ddd; color: #666; font-weight: bold; border-radius: 4px 4px 0 0; font-size: 11px; transition: 0.2s; }
-        .tab-btn.active { background: var(--p); color: white; }
-
-        .header-section { background: var(--p-dark); padding: 10px; border-radius: 6px; margin-bottom: 10px; }
-        .inputs-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
-        label { display: block; font-size: 10px; font-weight: bold; margin-bottom: 3px; color: #ffffff; text-transform: uppercase; }
-        input, select { width: 100%; padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 13px; height: 34px; }
-
-        .dash { display: flex; gap: 8px; margin-bottom: 10px; }
-        .counter-card { flex: 1; padding: 8px; border-radius: 6px; color: white; text-align: center; position: relative; }
-        .c-ok { background: var(--ok); } 
-        .c-nok { background: var(--nok); }
-        .counter-card h2 { margin: 0; font-size: 1.2em; }
-        .perc-badge { position: absolute; top: 5px; right: 8px; font-size: 9px; background: rgba(0,0,0,0.2); padding: 2px 5px; border-radius: 10px; }
-        .progress-box { width: 100%; height: 5px; background: rgba(0,0,0,0.15); border-radius: 3px; margin-top: 6px; overflow: hidden; }
-        .progress-bar { height: 100%; background: #fff; width: 0%; transition: width 0.3s ease; }
-
-        @keyframes pulse-alert {
-            0% { background-color: #2c3e50; }
-            50% { background-color: #e67e22; }
-            100% { background-color: #2c3e50; }
-        }
-        @keyframes pulse-error {
-            0% { background-color: #c0392b; }
-            50% { background-color: #ff0000; }
-            100% { background-color: #c0392b; }
-        }
-        .scan-area { background: #2c3e50; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 10px; transition: background 0.3s; }
-        .scan-area.lote-cheio { animation: pulse-alert 1.5s infinite; }
-        .scan-area.erro-mistura { animation: pulse-error 0.4s infinite; }
-
-        #input-dm { width: 100%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); color: white; font-size: 14px; outline: none; }
-        #ref-badge-indicator { display: inline-block; padding: 2px 8px; background: #e67e22; border-radius: 4px; font-weight: bold; margin-left: 5px; font-size: 11px; }
-        #pattern-info { display: block; font-size: 10px; color: #bdc3c7; margin-top: 4px; font-style: italic; }
-
-        .buffer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .buffer-box { background: #fff; border-radius: 6px; height: 250px; display: flex; flex-direction: column; border: 1px solid #eee; overflow: hidden; }
-        .buffer-header { color: white; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 10px; min-height: 50px; }
-        .btn-mini-finish { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 0 12px; border-radius: 4px; cursor: pointer; height: 44px; min-width: 70px; font-weight: bold; }
-        .btn-mini-finish.piscar { background: #e67e22; animation: pulse-btn 1s infinite; font-size: 12px; border: 2px solid white; }
-        
-        @keyframes pulse-btn {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .table-wrapper { max-height: 450px; overflow-y: auto; background: white; border-radius: 4px; }
-        table { width:100%; border-collapse: collapse; font-size: 10px; }
-        thead th { position: sticky; top: 0; background:#f2f2f2; padding: 8px; text-align: left; color: var(--p-dark); z-index: 5; }
-        td { padding: 6px 8px; border-bottom: 1px solid #eee; }
-        .filter-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 10px; }
-
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:1000; }
-        .modal-content { background:white; padding:15px; border-radius:10px; text-align:center; width:95%; max-width:320px; }
-        .btn-decision { padding: 12px; font-size: 0.9em; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: white; margin-bottom: 6px; width: 100%; }
-        #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 9999; display: none; font-size: 12px; white-space: nowrap; }
-        
-        .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
-        .buffer-item:hover { background: #fff5f5; color: var(--nok); }
-
-        .status-badge { font-weight: bold; text-align: center; border-radius: 4px; padding: 3px 6px; display: inline-block; color: white; min-width: 90px; }
-        .status-ok { background-color: var(--ok); }
-        .status-retrabalhada { background-color: var(--ret); }
-        .status-nok { background-color: var(--nok); }
-
-        .group-header { background-color: #e6f2ff !important; font-weight: bold; cursor: pointer; user-select: none; }
-        .group-header:hover { background-color: #d0e7ff !important; }
-        .child-row { display: none; background-color: #fafafa; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: #333; font-size: 14px; padding: 5px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 15px; border-radius: 8px 8px 0 0; border-bottom: 1px solid #eee; }
+        .logo-container { display: flex; align-items: center; gap: 8px; user-select: none; }
+        .logo-text { font-family: 'Arial Black', sans-serif; font-size: 26px; font-weight: 900; color: var(--p); letter-spacing: -1px; line-height: 1; }
+        .logo-symbol { display: flex; flex-direction: column; gap: 2px; }
+        .logo-bar { width: 12px; height: 4px; background: var(--trigo-green); border-radius: 1px; }
+        .stat-card { padding: 12px; border-radius: 8px; background: white; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; }
+        .stat-val { font-size: 1.4rem; font-weight: 800; display: block; color: var(--p-dark); }
+        .stat-lab { font-size: 0.65rem; color: #666; text-transform: uppercase; font-weight: 700; }
+        .card { border: none; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .header-section-title { background: var(--p-dark); color: white; padding: 10px 15px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: bold; }
+        .btn-primary { background-color: var(--p); border-color: var(--p); }
+        .table-container { background: white; max-height: 60vh; overflow-y: auto; }
+        thead th { background: #f8f9fa !important; color: var(--p-dark); font-size: 12px; }
+        .badge-ent { background: var(--ok); color: white; border-radius: 4px; font-size: 10px; }
+        .badge-sai { background: var(--nok); color: white; border-radius: 4px; font-size: 10px; }
+        .dm-link { color: var(--p); font-weight: 600; text-decoration: none; border-bottom: 1px dashed var(--p); cursor: pointer; }
+        .cloud-status { font-size: 11px; font-weight: bold; }
+        .app-version { font-size: 11px; font-weight: 700; color: #a0a0a0; background: #f8f9fa; padding: 3px 6px; border-radius: 4px; border: 1px solid #e9ecef; }
+        .editable-cell { cursor: pointer; border-bottom: 1px dashed #ccc; }
+        .editable-cell:hover { background-color: #f1f3f5; }
+        .balanco-container { max-height: 200px; overflow-y: auto; }
     </style>
 </head>
 <body>
 
-<div id="custom-toast"></div>
-
-<main class="container">
-    <header class="top-bar">
-        <nav class="tabs">
-            <button class="tab-btn active" id="btn-reg" onclick="switchTab('registo')">CONTROLO</button>
-            <button class="tab-btn" id="btn-hist" onclick="switchTab('historico')">HISTÓRICO</button>
-        </nav>
-        <div id="datetime-container">
-            <span id="live-date">00/00/0000</span>
-            <span id="live-time">00:00:00</span>
-            <div class="drive-status-badge" id="drive-badge">
-                <span class="drive-dot drive-offline" id="drive-dot"></span>
-                <span id="drive-text">DRIVE: OFF</span>
-            </div>
-        </div>
-        <div class="logo-container">
-            <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v3.9.0-AutoFinish</span>
-        </div>
-    </header>
-
-    <section id="view-registo">
-        <div class="header-section">
-            <div class="inputs-row">
-                <div>
-                    <label>Inspetor</label>
-                    <input type="text" id="inspetor" list="dl-inspetores">
+    <main class="container-fluid mx-auto" style="max-width: 1250px;">
+        <header class="top-bar mt-2 shadow-sm">
+            <div class="logo-container">
+                <div class="logo-text">TRIGO</div>
+                <div class="logo-symbol">
+                    <div class="logo-bar"></div><div class="logo-bar"></div>
+                    <div class="logo-bar"></div><div class="logo-bar"></div>
                 </div>
-                <div><label>Referência</label><input type="text" id="referencia" list="dl-refs" onchange="learnReferencePattern(this.value); updateUI();"></div>
-                <div><label>Missão</label><input type="text" id="missao" list="dl-missoes"></div>
-                <div><label>QTD</label><input type="number" id="quantidade" min="1" onchange="updateUI()"></div>
             </div>
-        </div>
-
-        <div class="dash">
-            <div class="counter-card c-ok">
-                <div class="perc-badge" id="perc-ok">0%</div>
-                <span>PEÇAS OK</span>
-                <h2 id="ui-ok">0 / -</h2>
-                <div class="progress-box"><div id="bar-ok" class="progress-bar"></div></div>
-            </div>
-            <div class="counter-card c-nok">
-                <div class="perc-badge" id="perc-nok">0%</div>
-                <span>PEÇAS NOK</span>
-                <h2 id="ui-nok">0 / -</h2>
-                <div class="progress-box"><div id="bar-nok" class="progress-bar"></div></div>
-            </div>
-        </div>
-
-        <div class="scan-area" id="scan-area-box">
-            <h3 id="scan-title" style="margin:0 0 5px 0; font-size:12px;">DATA MATRIX <span id="ref-badge-indicator" style="display:none;"></span></h3>
-            <input type="text" id="input-dm" placeholder="Aguardando leitura..." onkeypress="handleScan(event)">
-            <span id="pattern-info">Sincronizando com a Nuvem...</span>
-        </div>
-
-        <div class="buffer-grid">
-            <div class="buffer-box">
-                <div class="buffer-header" style="background: var(--ok);">
-                    <span>LISTA OK</span>
-                    <button class="btn-mini-finish" id="btn-fechar-ok" onclick="forceFinish('OK')">FECHAR</button>
-                </div>
-                <div id="ok-list" style="overflow-y:auto; padding:5px; font-size:9px;"></div>
-            </div>
-            <div class="buffer-box">
-                <div class="buffer-header" style="background: var(--nok);">
-                    <span>LISTA NOK</span>
-                    <button class="btn-mini-finish" id="btn-fechar-nok" onclick="forceFinish('NOK')">FECHAR</button>
-                </div>
-                <div id="nok-list" style="overflow-y:auto; padding:5px; font-size:9px;"></div>
-            </div>
-        </div>
-    </section>
-
-    <section id="view-historico" style="display:none; background: var(--p-dark); padding: 10px; border-radius: 6px;">
-        <div class="hist-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: white; font-size: 11px;">
-            <span id="hist-counter">Registos: 0</span>
-            <div style="display:flex; gap:5px; flex-wrap: wrap;">
-                <button onclick="exportExcel()" style="background:var(--ok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">📤 EXCEL</button>
-                <button onclick="syncFromCloud()" style="background:#00a3ff; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight: bold;">🔄 ATUALIZAR NUVEM</button>
-                <button onclick="clearHistorySecure()" style="background:var(--nok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">LIMPAR</button>
-            </div>
-        </div>
-        <div class="filter-bar">
-            <div><label>Inspetor</label><select id="f-insp" onchange="renderHist()"></select></div>
-            <div><label>Ref</label><select id="f-ref" onchange="renderHist()"></select></div>
-            <div><label>Status</label><select id="f-status" onchange="renderHist()"><option value="">Tudo</option><option value="OK">OK</option><option value="RETRABALHADA">RETRABALHADA</option><option value="NOK">NOK</option></select></div>
-            <div><label>Pesquisar DM</label><input type="text" id="f-dm-search" oninput="renderHist()"></div>
-        </div>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Data/Hora Registo</th>
-                        <th>Data Produção</th>
-                        <th>Insp</th>
-                        <th>Ref</th>
-                        <th>Missão</th>
-                        <th>DM</th>
-                        <th>Etiqueta</th>
-                        <th>Status</th> </tr>
-                </thead>
-                <tbody id="tbody-hist"></tbody>
-            </table>
-        </div>
-    </section>
-</main>
-
-<div id="modal-status" class="modal">
-    <div class="modal-content">
-        <h4>ESTADO DA PEÇA</h4>
-        <div id="dm-display" style="font-size:11px; margin-bottom:15px; color:#666"></div>
-        <button class="btn-decision" style="background:var(--ok)" onclick="applyStatus('OK')">✓ PEÇA OK</button>
-        <button class="btn-decision" style="background:var(--ret)" onclick="applyStatus('RETRABALHADA')">↺ RETRABALHADA</button>
-        <button class="btn-decision" style="background:var(--nok)" onclick="applyStatus('NOK')">✗ PEÇA NOK</button>
-        <button onclick="closeModalStatus()" style="border:none; background:none; font-size:11px; color:grey; cursor:pointer;">CANCELAR</button>
-    </div>
-</div>
-
-<div id="modal-fecho" class="modal">
-    <div class="modal-content">
-        <h3 id="fecho-titulo">FECHAR LOTE</h3>
-        <label style="color: #333; font-size: 11px; margin-bottom: 5px; display: block;">Data de produção</label>
-        <input type="date" id="data-fecho-lote" style="margin-bottom:8px;">
-        <input type="text" id="etiq-final" placeholder="Digitalizar Número de Etiqueta" style="margin-bottom:10px;">
-        <button class="btn-decision" style="background:var(--p)" onclick="confirmFinishLote()">FINALIZAR</button>
-        <button onclick="closeModalFecho()" style="border:none; background:none; font-size:11px; color:grey; cursor:pointer; margin-top:10px;">CANCELAR FECHO</button>
-    </div>
-</div>
-
-<datalist id="dl-inspetores"></datalist>
-<datalist id="dl-refs"></datalist>
-<datalist id="dl-missoes"></datalist>
-
-<script>
-    if ('serviceWorker' in navigator) {
-        const swCode = `
-            const CACHE_NAME = 'trigo-v25-cloud';
-            self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['./'])).then(() => self.skipWaiting())); });
-            self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });
-            self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))); });
-        `;
-        const dataUrl = 'data:text/javascript;base64,' + btoa(unescape(encodeURIComponent(swCode)));
-        navigator.serviceWorker.register(dataUrl).catch(err => console.log(err));
-    }
-
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQC6nPrt4Iz0vEtzEFUdesHgfu85nXfARIWDStKARPymOHCAs7I7axiHV9D6VgZmYF/exec";
-
-    let dbInstance = null;
-    let memory = { users:[], refs:{}, missions:[] };
-    let bufferOK = [];
-    let bufferNOK = [];
-    let tempDM = null, currentLoteType = "";
-    let currentRefPattern = null; 
-
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playBeep(freq, duration) {
-        try {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.frequency.value = freq; gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            osc.start(); osc.stop(audioCtx.currentTime + duration);
-        } catch(e) {}
-    }
-
-    function initIndexedDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open("TrigoDB", 1);
-            request.onerror = () => reject();
-            request.onupgradeneeded = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains("historico")) db.createObjectStore("historico", { keyPath: "dm" });
-                if (!db.objectStoreNames.contains("app_state")) db.createObjectStore("app_state");
-            };
-            request.onsuccess = async (e) => {
-                dbInstance = e.target.result;
-                await loadStateFromDB();
-                resolve();
-            };
-        });
-    }
-
-    async function loadStateFromDB() {
-        memory = await getFromDB("app_state", "memory") || { users:[], refs:{}, missions:[] };
-        const savedBuffers = await getFromDB("app_state", "buffers") || { ok: [], nok: [] };
-        bufferOK = savedBuffers.ok || [];
-        bufferNOK = savedBuffers.nok || [];
-        
-        const activeRef = document.getElementById('referencia').value.toUpperCase().trim();
-        if (activeRef) await learnReferencePattern(activeRef);
-    }
-
-    async function saveBuffers() { await saveToDB("app_state", "buffers", { ok: bufferOK, nok: bufferNOK }); }
-    async function saveMemory() { await saveToDB("app_state", "memory", memory); }
-    function getFromDB(store, key) { return new Promise(res => { const tx = dbInstance.transaction([store], "readonly"); const req = tx.objectStore(store).get(key); req.onsuccess = () => res(req.result); }); }
-    function saveToDB(store, key, val) { return new Promise(res => { const tx = dbInstance.transaction([store], "readwrite"); const req = tx.objectStore(store).put(val, key); req.onsuccess = () => res(true); }); }
-    async function getAllFromDB(store) { return new Promise(res => { const tx = dbInstance.transaction([store], "readonly"); const req = tx.objectStore(store).getAll(); req.onsuccess = () => res(req.result || []); }); }
-    async function savePieceToHist(item) { const tx = dbInstance.transaction(["historico"], "readwrite"); tx.objectStore("historico").put(item); }
-    async function clearStore(store) { const tx = dbInstance.transaction([store], "readwrite"); tx.objectStore(store).clear(); }
-
-    function updateCloudStatus(isOnline) {
-        const dot = document.getElementById('drive-dot');
-        const text = document.getElementById('drive-text');
-        if (isOnline) {
-            dot.className = "drive-dot drive-online";
-            text.innerText = "DRIVE: ON";
-        } else {
-            dot.className = "drive-dot drive-offline";
-            text.innerText = "DRIVE: OFF";
-        }
-    }
-
-    async function syncFromCloud() {
-        if (!GOOGLE_SCRIPT_URL) { updateCloudStatus(false); return; }
-        try {
-            const response = await fetch(GOOGLE_SCRIPT_URL);
-            if (!response.ok) throw new Error();
-            const cloudRecords = await response.json();
-            
-            updateCloudStatus(true);
-            
-            if (Array.isArray(cloudRecords) && cloudRecords.length > 0) {
-                const tx = dbInstance.transaction(["historico"], "readwrite");
-                const store = tx.objectStore("historico");
+            <div class="d-flex align-items-center gap-2">
+                <span id="cloud-indicator" class="cloud-status text-muted me-2"></span>
                 
-                cloudRecords.forEach(item => {
-                    if (item.dm) {
-                        store.put(item);
-                        if (item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
-                        if (item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
-                        if (item.ref && !memory.refs[item.ref]) memory.refs[item.ref] = "100";
+                <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('importFile').click()" title="Importar Ficheiro Local Excel"><i data-lucide="upload" size="16"></i></button>
+                <input type="file" id="importFile" hidden accept=".xlsx, .xls" onchange="importExcel(this)">
+                
+                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="offcanvas" data-bs-target="#panelOptions"><i data-lucide="settings" size="16"></i></button>
+                
+                <button class="btn btn-sm btn-outline-primary fw-bold" onclick="importFromDrive()" id="btn-import-drive"><i data-lucide="cloud-download" size="16"></i> DRIVE</button>
+                
+                <button class="btn btn-sm btn-primary" onclick="exportExcel()"><i data-lucide="download" size="16"></i> EXCEL</button>
+                <span class="app-version ms-1">v3.5.1</span>
+            </div>
+        </header>
+
+        <div class="row g-2 mt-2 mb-2">
+            <div class="col-6 col-md-3"><div class="stat-card"><span class="stat-lab">Registos</span><span class="stat-val" id="count-reg">0</span></div></div>
+            <div class="col-6 col-md-3"><div class="stat-card" style="border-bottom: 3px solid var(--ok);"><span class="stat-lab">Entradas Total</span><span class="stat-val text-success" id="count-ent">0</span></div></div>
+            <div class="col-6 col-md-3"><div class="stat-card" style="border-bottom: 3px solid var(--nok);"><span class="stat-lab">Saídas Total</span><span class="stat-val text-danger" id="count-sai">0</span></div></div>
+            <div class="col-6 col-md-3"><div class="stat-card" style="border-bottom: 3px solid var(--ret);"><span class="stat-lab">Balanço Global em Jaula</span><span class="stat-val text-warning" id="count-stk">0</span></div></div>
+        </div>
+
+        <div class="row g-2 mb-3">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="header-section-title bg-secondary"><i data-lucide="layers" class="me-2" size="16"></i>BALANÇO INDIVIDUAL EM JAULA (POR REFERÊNCIA)</div>
+                    <div class="p-2 balanco-container bg-white">
+                        <table class="table table-sm table-bordered align-middle mb-0 text-center" style="font-size: 11px;">
+                            <thead class="bg-light sticky-top">
+                                <tr>
+                                    <th>Referência da Peça</th>
+                                    <th>Total Entradas (+)</th>
+                                    <th>Total Saídas (-)</th>
+                                    <th>Disponível em Jaula</th>
+                                </tr>
+                            </thead>
+                            <tbody id="balancoTableBody">
+                                <tr><td colspan="4" class="text-muted">Nenhum registo carregado.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="header-section-title"><i data-lucide="plus-circle" class="me-2" size="16"></i>NOVO MOVIMENTO</div>
+                    <div class="p-3">
+                        <form id="mainForm" class="row g-2">
+                            <div class="col-12">
+                                <label class="small fw-bold mb-1">MISSÃO / LOTE</label>
+                                <input type="text" id="in-missao" class="form-control form-control-sm" required placeholder="Ex: 26.0000" list="dl-missao" onchange="handleMissaoAutofill(this.value)">
+                                <datalist id="dl-missao"></datalist>
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold mb-1">DATA</label>
+                                <input type="date" id="in-data" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold mb-1">TIPO</label>
+                                <select id="in-tipo" class="form-select form-select-sm">
+                                    <option value="Entrada">ENTRADA</option>
+                                    <option value="Saída">SAÍDA</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="small fw-bold mb-1">REFERÊNCIA PEÇA</label>
+                                <input type="text" id="in-ref" class="form-control form-control-sm" required placeholder="Ex: 328017244R" list="dl-ref">
+                                <datalist id="dl-ref"></datalist>
+                            </div>
+                            <div class="col-12">
+                                <label class="small fw-bold mb-1">FORNECEDOR</label>
+                                <input type="text" id="in-fornecedor" class="form-control form-control-sm" placeholder="Ex: Nome do Fornecedor" list="dl-fornecedor">
+                                <datalist id="dl-fornecedor"></datalist>
+                            </div>
+                            <div class="col-4">
+                                <label class="small fw-bold mb-1">QTD</label>
+                                <input type="number" id="in-qtd" class="form-control form-control-sm" value="1" min="1" required>
+                            </div>
+                            <div class="col-8">
+                                <label class="small fw-bold mb-1">RESPONSÁVEL</label>
+                                <select id="in-resp" class="form-select form-select-sm"></select>
+                            </div>
+                            <div class="col-12">
+                                <label class="small fw-bold mb-1">CÓDIGOS DATA MATRIX</label>
+                                <textarea id="in-dm" class="form-control form-control-sm" rows="2" placeholder="Scan..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="small fw-bold mb-1">DEFEITOS</label>
+                                <input type="text" id="in-defeitos" class="form-control form-control-sm" placeholder="Ex: Rebarba, Porosidade, Riscado...">
+                            </div>
+                            <div class="col-12 pt-2">
+                                <button type="submit" id="btn-submit" class="btn btn-primary w-100 fw-bold">REGISTAR</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card shadow-sm overflow-hidden">
+                    <div class="p-2 bg-light border-bottom d-flex align-items-center">
+                        <i data-lucide="search" class="text-muted mx-2" size="18"></i>
+                        <input type="text" id="in-filter" class="form-control form-control-sm border-0 bg-transparent" placeholder="Filtrar registos...">
+                    </div>
+                    <div class="table-container">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 12px;">
+                            <thead class="sticky-top">
+                                <tr>
+                                    <th class="ps-3">Data</th><th>Missão</th><th>Ref</th><th>Fornecedor</th><th>Tipo</th><th>Qtd</th><th>Resp.</th><th>DM</th><th>Defeitos</th><th class="text-end pe-3">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal fade" id="dmModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0"><div class="modal-header bg-light"><h6 class="modal-title fw-bold">Data Matrix</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><ul class="list-group list-group-flush" id="dmListUI"></ul></div></div></div></div>
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="panelOptions"><div class="offcanvas-header border-bottom"><h5 class="offcanvas-title fw-bold">Configurações</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body"><h6>Responsáveis</h6><div class="input-group mb-3"><input type="text" id="newRespName" class="form-control"><button class="btn btn-primary" onclick="addResp()">Add</button></div><div id="respUI"></div><hr><button class="btn btn-outline-danger w-100 btn-sm" onclick="clearData()">LIMPAR TUDO</button></div></div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyZ_0yPVRGCoh7rTDbfpBEW1rUjYotoYxPtcbhKZyL78ue6e_qnWhjFNuLLOFPGVus54g/exec";
+
+        let dbIndexed;
+        let dbMemory = [];
+        let resps = [];
+
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("TrigoNokDatabase", 1);
+                
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains("movimentos")) {
+                        database.createObjectStore("movimentos", { keyPath: "id" });
                     }
-                });
-                
-                await saveMemory();
-                updateDatalists();
-                showPopup(`Nuvem Sincronizada! ${cloudRecords.length} registos carregados.`, "success");
-            }
-        } catch (e) {
-            updateCloudStatus(false);
-            console.warn("Modo Offline: Não foi possível descarregar dados atualizados da Nuvem.");
-        }
-        
-        const activeRef = document.getElementById('referencia').value.toUpperCase().trim();
-        await learnReferencePattern(activeRef);
-    }
+                    if (!database.objectStoreNames.contains("configuracoes")) {
+                        database.createObjectStore("configuracoes", { keyPath: "chave" });
+                    }
+                };
 
-    async function learnReferencePattern(refVal) {
-        refVal = refVal.toUpperCase().trim();
-        const patternInfoSpan = document.getElementById('pattern-info');
-        
-        if (!refVal) {
-            currentRefPattern = null;
-            patternInfoSpan.innerText = "Aguardando seleção de referência...";
-            return;
-        }
+                request.onsuccess = async (e) => {
+                    dbIndexed = e.target.result;
+                    await loadDatabaseMemory();
+                    resolve();
+                };
 
-        const allHist = await getAllFromDB("historico");
-        const matches = allHist.filter(p => p.ref === refVal);
-
-        if (matches.length >= 2) {
-            const firstDM = matches[0].dm;
-            const targetLen = firstDM.length;
-            const targetPrefix = firstDM.substring(0, Math.min(9, targetLen));
-            const structuralTail = firstDM.substring(Math.floor(targetLen * 0.7)).replace(/[A-Z0-9]/g, '');
-
-            const isConsistent = matches.every(p => {
-                const pTail = p.dm.substring(Math.floor(p.dm.length * 0.7)).replace(/[A-Z0-9]/g, '');
-                return p.dm.length === targetLen && p.dm.startsWith(targetPrefix) && pTail === structuralTail;
+                request.onerror = (e) => reject(e.target.error);
             });
-
-            if (isConsistent) {
-                currentRefPattern = { length: targetLen, prefix: targetPrefix, tailStructure: structuralTail, source: "Nuvem/Histórico" };
-                patternInfoSpan.innerText = `Padrão Ativo: ${targetLen} carateres (Identificador: "${targetPrefix}")`;
-                focusDM();
-                return;
-            }
         }
 
-        const currentBatch = [...bufferOK, ...bufferNOK];
-        if (currentBatch.length > 0) {
-            const firstDM = currentBatch[0].dm;
-            const targetLen = firstDM.length;
-            const targetPrefix = firstDM.substring(0, Math.min(9, targetLen));
-            const structuralTail = firstDM.substring(Math.floor(targetLen * 0.7)).replace(/[A-Z0-9]/g, '');
+        async function loadDatabaseMemory() {
+            resps = await getConfData("responsáveis") || ["Operador Principal"];
+            dbMemory = await getAllMovimentos();
+            dbMemory.sort((a, b) => b.id - a.id);
+            updateDatalists();
+            render();
+        }
+
+        function getConfData(chave) {
+            return new Promise((resolve) => {
+                const tx = dbIndexed.transaction("configuracoes", "readonly");
+                const store = tx.objectStore("configuracoes");
+                const req = store.get(chave);
+                req.onsuccess = () => resolve(req.result ? req.result.valor : null);
+                req.onerror = () => resolve(null);
+            });
+        }
+
+        function saveConfData(chave, valor) {
+            return new Promise((resolve) => {
+                const tx = dbIndexed.transaction("configuracoes", "readwrite");
+                const store = tx.objectStore("configuracoes");
+                store.put({ chave, valor });
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        function getAllMovimentos() {
+            return new Promise((resolve) => {
+                const tx = dbIndexed.transaction("movimentos", "readonly");
+                const store = tx.objectStore("movimentos");
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => resolve([]);
+            });
+        }
+
+        function saveMovimentoDB(item) {
+            return new Promise((resolve) => {
+                const tx = dbIndexed.transaction("movimentos", "readwrite");
+                const store = tx.objectStore("movimentos");
+                store.put(item);
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        function deleteMovimentoDB(id) {
+            return new Promise((resolve) => {
+                const tx = dbIndexed.transaction("movimentos", "readwrite");
+                const store = tx.objectStore("movimentos");
+                store.delete(id);
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        function clearAllDataDB() {
+            return new Promise((resolve) => {
+                const tx = dbIndexed.transaction(["movimentos", "configuracoes"], "readwrite");
+                tx.objectStore("movimentos").clear();
+                tx.objectStore("configuracoes").clear();
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        function updateDatalists() {
+            const missoes = [...new Set(dbMemory.map(i => i.missao))].sort();
+            const refs = [...new Set(dbMemory.map(i => i.ref))].sort();
+            const fornecedores = [...new Set(dbMemory.filter(i => i.fornecedor).map(i => i.fornecedor))].sort();
             
-            currentRefPattern = { length: targetLen, prefix: targetPrefix, tailStructure: structuralTail, source: "Lote Atual" };
-            patternInfoSpan.innerText = `Padrão Temporário: ${currentRefPattern.length} carateres (Identificador: "${currentRefPattern.prefix}")`;
-            focusDM();
-            return;
+            document.getElementById('dl-missao').innerHTML = missoes.map(m => `<option value="${m}">`).join('');
+            document.getElementById('dl-ref').innerHTML = refs.map(r => `<option value="${r}">`).join('');
+            document.getElementById('dl-fornecedor').innerHTML = fornecedores.map(f => `<option value="${f}">`).join('');
         }
 
-        currentRefPattern = null;
-        patternInfoSpan.innerText = "ℹ️ Referência Nova: Formato estrito guardado a partir da 1ª peça.";
-        focusDM();
-    }
-
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('live-date').innerText = now.toLocaleDateString('pt-PT');
-        document.getElementById('live-time').innerText = now.toLocaleTimeString('pt-PT');
-    }
-    setInterval(updateClock, 1000);
-
-    async function switchTab(t) {
-        document.getElementById('view-registo').style.display = t === 'registo' ? 'block' : 'none';
-        document.getElementById('view-historico').style.display = t === 'historico' ? 'block' : 'none';
-        document.getElementById('btn-reg').classList.toggle('active', t === 'registo');
-        document.getElementById('btn-hist').classList.toggle('active', t === 'historico');
-        if(t === 'historico') { await updateFilterOptions(); await renderHist(); } else { focusDM(); }
-    }
-
-    function showPopup(msg, type = 'success') {
-        const toast = document.getElementById('custom-toast');
-        toast.innerText = msg;
-        toast.style.background = type === 'success' ? 'var(--ok)' : (type === 'error' ? 'var(--nok)' : 'var(--p)');
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 2500);
-    }
-
-    async function sendToGoogleDrive(payloadData) {
-        if (!GOOGLE_SCRIPT_URL) { updateCloudStatus(false); return false; }
-        const CHUNK_SIZE = 50; 
-        let success = true;
-        for (let i = 0; i < Math.ceil(payloadData.length / CHUNK_SIZE); i++) {
-            const chunk = payloadData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-            try { 
-                await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(chunk) }); 
-            } catch (e) {
-                success = false;
+        function handleMissaoAutofill(valorMissao) {
+            if (!valorMissao) return;
+            const missaoProcurada = valorMissao.toUpperCase().trim();
+            const ultimoRegisto = dbMemory.find(i => i.missao.toUpperCase() === missaoProcurada);
+            
+            if (ultimoRegisto) {
+                document.getElementById('in-ref').value = ultimoRegisto.ref || '';
+                document.getElementById('in-fornecedor').value = ultimoRegisto.fornecedor || '';
+                document.getElementById('in-defeitos').value = ultimoRegisto.defeitos || '';
             }
         }
-        updateCloudStatus(success);
-        return success;
-    }
 
-    function updateUI() {
-        const qVal = document.getElementById('quantidade').value;
-        const qNum = parseInt(qVal) || 0;
-        const refVal = document.getElementById('referencia').value.toUpperCase().trim();
-        const inputDm = document.getElementById('input-dm');
-        
-        document.getElementById('ui-ok').innerText = `${bufferOK.length} / ${qVal || '-'}`;
-        document.getElementById('ui-nok').innerText = `${bufferNOK.length} / ${qVal || '-'}`;
-        document.getElementById('perc-ok').innerText = qNum > 0 ? Math.round((bufferOK.length / qNum) * 100) + "%" : "0%";
-        document.getElementById('perc-nok').innerText = qNum > 0 ? Math.round((bufferNOK.length / qNum) * 100) + "%" : "0%";
-        document.getElementById('bar-ok').style.width = qNum > 0 ? Math.min((bufferOK.length / qNum) * 100, 100) + "%" : "0%";
-        document.getElementById('bar-nok').style.width = qNum > 0 ? Math.min((bufferNOK.length / qNum) * 100, 100) + "%" : "0%";
-        
-        document.getElementById('ok-list').innerHTML = bufferOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">${i.dm} <small>(${i.status})</small></div>`).reverse().join('');
-        document.getElementById('nok-list').innerHTML = bufferNOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">${i.dm}</div>`).reverse().join('');
-
-        const scanArea = document.getElementById('scan-area-box');
-        const scanTitle = document.getElementById('scan-title');
-        const badge = document.getElementById('ref-badge-indicator');
-
-        if(refVal) { badge.innerText = refVal; badge.style.display = "inline-block"; } else { badge.style.display = "none"; }
-
-        if (qNum > 0 && (bufferOK.length >= qNum || bufferNOK.length >= qNum)) {
-            scanArea.className = "scan-area lote-cheio";
-            scanTitle.innerText = "⚠️ LOTE COMPLETO! SUBSCREVA A ETIQUETA!";
-            document.getElementById('btn-fechar-ok').className = "btn-mini-finish " + (bufferOK.length >= qNum ? "piscar" : "");
-            document.getElementById('btn-fechar-nok').className = "btn-mini-finish " + (bufferNOK.length >= qNum ? "piscar" : "");
-            inputDm.disabled = true;
-            inputDm.placeholder = "Lote completo. Feche para continuar.";
-        } else {
-            scanArea.className = "scan-area";
-            scanTitle.innerHTML = `DATA MATRIX`;
-            document.getElementById('btn-fechar-ok').className = "btn-mini-finish";
-            document.getElementById('btn-fechar-nok').className = "btn-mini-finish";
-            inputDm.disabled = false;
-            inputDm.placeholder = "Aguardando leitura...";
-        }
-    }
-
-    async function removeFromBuffer(type, idx) {
-        if(confirm("Remover esta peça?")) {
-            if(type === 'OK') bufferOK.splice(idx, 1); else bufferNOK.splice(idx, 1);
-            await saveBuffers(); 
-            const refVal = document.getElementById('referencia').value;
-            await learnReferencePattern(refVal);
-            updateUI();
-            focusDM();
-        }
-    }
-
-    function handleScan(e) {
-        if (e.key === 'Enter') {
-            const dm = e.target.value.trim().toUpperCase(); 
-            e.target.value = "";
-            if(!dm) return;
-
-            const qNum = parseInt(document.getElementById('quantidade').value) || 0;
-            const scanArea = document.getElementById('scan-area-box');
-            const activeRef = document.getElementById('referencia').value.toUpperCase().trim();
-
-            // Segurança redundante caso o campo sofra bypass
-            if (qNum > 0 && (bufferOK.length >= qNum || bufferNOK.length >= qNum)) {
-                currentLoteType = bufferOK.length >= qNum ? "OK" : "NOK";
-                openFechoModal();
-                document.getElementById('etiq-final').value = dm;
-                playBeep(440, 0.1);
-                return;
-            }
-
-            if(!activeRef || !document.getElementById('quantidade').value || !document.getElementById('inspetor').value) {
-                playBeep(150, 0.5); showPopup("Faltam dados no cabeçalho!", "error"); return;
-            }
-
-            if (currentRefPattern) {
-                const scannedPrefix = dm.substring(0, currentRefPattern.prefix.length);
-                const scannedTailStructure = dm.substring(Math.floor(dm.length * 0.7)).replace(/[A-Z0-9]/g, '');
-
-                if (dm.length !== currentRefPattern.length || 
-                    scannedPrefix !== currentRefPattern.prefix || 
-                    scannedTailStructure !== currentRefPattern.tailStructure) {
-                    
-                    playBeep(100, 0.8); 
-                    scanArea.className = "scan-area erro-mistura";
-                    showPopup(`⚠️ MISTURA DETETADA! Esperado início "${currentRefPattern.prefix}" com tamanho ${currentRefPattern.length}`, "error");
-                    
-                    setTimeout(() => { 
-                        scanArea.className = qNum > 0 && (bufferOK.length >= qNum || bufferNOK.length >= qNum) ? "scan-area lote-cheio" : "scan-area"; 
-                    }, 2500);
-                    return;
+        async function updateField(id, field, value) {
+            const item = dbMemory.find(i => i.id === id);
+            if (item) {
+                if (field === 'missao' || field === 'ref') {
+                    item[field] = value.toUpperCase().trim();
+                } else if (field === 'qtd') {
+                    item[field] = parseInt(value) || 1;
+                } else {
+                    item[field] = value.trim();
                 }
-            } else {
-                const targetLen = dm.length;
-                const targetPrefix = dm.substring(0, Math.min(9, targetLen));
-                const structuralTail = dm.substring(Math.floor(targetLen * 0.7)).replace(/[A-Z0-9]/g, '');
-                
-                currentRefPattern = { length: targetLen, prefix: targetPrefix, tailStructure: structuralTail, source: "Leitura Inicial" };
-                document.getElementById('pattern-info').innerText = `Padrão Memorizado: ${dm.length} carateres (Identificador: "${currentRefPattern.prefix}")`;
+                await saveMovimentoDB(item);
+                updateDatalists();
+                render();
+            }
+        }
+
+        async function editRowWizard(id) {
+            const item = dbMemory.find(i => i.id === id);
+            if (!item) return;
+
+            const novaData = prompt("Editar DATA (AAAA-MM-DD):", item.data);
+            if (novaData !== null) await updateField(id, 'data', novaData);
+
+            const novoTipo = prompt("Editar TIPO (Entrada ou Saída):", item.tipo);
+            if (novoTipo !== null && (novoTipo.toLowerCase() === 'entrada' || novoTipo.toLowerCase() === 'saída')) {
+                await updateField(id, 'tipo', novoTipo.charAt(0).toUpperCase() + novoTipo.slice(1).toLowerCase());
             }
 
-            if (bufferOK.some(i => i.dm === dm) || bufferNOK.some(i => i.dm === dm)) { 
-                playBeep(150, 0.5); showPopup("Esta peça já existe no lote!", "error"); return; 
-            }
+            const novaQtd = prompt("Editar QUANTIDADE:", item.qtd);
+            if (novaQtd !== null) await updateField(id, 'qtd', novaQtd);
 
-            tempDM = dm;
-            document.getElementById('dm-display').innerText = dm;
-            document.getElementById('modal-status').style.display = 'flex';
+            const novoResp = prompt("Editar RESPONSÁVEL:", item.resp || '');
+            if (novoResp !== null) await updateField(id, 'resp', novoResp);
         }
-    }
 
-    async function applyStatus(status) {
-        const agora = new Date();
-        const dataHoraRegisto = agora.toLocaleDateString('pt-PT') + ' ' + agora.toLocaleTimeString('pt-PT');
-
-        const item = {
-            insp: document.getElementById('inspetor').value.trim(),
-            ref: document.getElementById('referencia').value.toUpperCase().trim(),
-            missao: document.getElementById('missao').value.trim(),
-            dm: tempDM, 
-            status: status,
-            hora: dataHoraRegisto
-        };
-        if(item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
-        if(item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
-        memory.refs[item.ref] = document.getElementById('quantidade').value;
-        
-        await saveMemory(); updateDatalists();
-        document.getElementById('modal-status').style.display = 'none';
-        
-        if(status === 'OK' || status === 'RETRABALHADA') bufferOK.push(item); else bufferNOK.push(item);
-        
-        const targetQty = parseInt(document.getElementById('quantidade').value);
-        await saveBuffers(); updateUI(); 
-
-        // CORREÇÃO CRÍTICA: O gatilho agora dispara IMEDIATAMENTE aqui mal a última peça entra no array
-        if(bufferOK.length >= targetQty || bufferNOK.length >= targetQty) { 
-            currentLoteType = bufferOK.length >= targetQty ? "OK" : "NOK"; 
-            playBeep(880, 0.1); setTimeout(() => playBeep(880, 0.1), 150); 
-            openFechoModal(); 
-        } else {
-            focusDM();
-        }
-    }
-
-    function openFechoModal() {
-        document.getElementById('fecho-titulo').innerText = `FECHAR LOTE ${currentLoteType}`;
-        document.getElementById('data-fecho-lote').valueAsDate = new Date();
-        document.getElementById('modal-fecho').style.display = 'flex';
-        setTimeout(() => document.getElementById('etiq-final').focus(), 300);
-    }
-
-    async function confirmFinishLote() {
-        const etiq = document.getElementById('etiq-final').value.trim();
-        const data = document.getElementById('data-fecho-lote').value;
-        if(!etiq || !data) return showPopup("Faltam dados!", "error");
-        
-        const lote = (currentLoteType === "OK") ? bufferOK : bufferNOK;
-        for (let i of lote) { i.etiqueta = etiq; i.data_producao = data; await savePieceToHist(i); }
-
-        await sendToGoogleDrive(lote);
-        
-        if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
-        await saveBuffers();
-        
-        const refVal = document.getElementById('referencia').value;
-        await learnReferencePattern(refVal);
-        
-        document.getElementById('modal-fecho').style.display = 'none';
-        document.getElementById('etiq-final').value = ""; 
-        updateUI(); 
-        showPopup("Lote Finalizado!"); 
-        focusDM();
-    }
-
-    function closeModalFecho() { document.getElementById('modal-fecho').style.display = 'none'; updateUI(); focusDM(); }
-    function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; focusDM(); }
-    function forceFinish(type) { if((type === 'OK' ? bufferOK : bufferNOK).length > 0) { currentLoteType = type; openFechoModal(); } }
-    function focusDM() { const input = document.getElementById('input-dm'); if(!input.disabled) input.focus(); }
-
-    function updateDatalists() {
-        document.getElementById('dl-inspetores').innerHTML = memory.users.map(u => `<option value="${u}">`).join('');
-        document.getElementById('dl-refs').innerHTML = Object.keys(memory.refs).map(r => `<option value="${r}">`).join('');
-        document.getElementById('dl-missoes').innerHTML = memory.missions.map(m => `<option value="${m}">`).join('');
-    }
-
-    function toggleEtiquetaGroup(id) { document.querySelectorAll(`.child-of-${id}`).forEach(row => { row.style.display = (row.style.display === 'table-row') ? 'none' : 'table-row'; }); }
-
-    async function renderHist() {
-        const fi = document.getElementById('f-insp').value;
-        const fr = document.getElementById('f-ref').value;
-        const fs = document.getElementById('f-status').value;
-        const fdm = document.getElementById('f-dm-search').value.trim().toUpperCase();
-        
-        const dbList = await getAllFromDB("historico");
-        const filtered = dbList.filter(p => (fi==="" || p.insp===fi) && (fr==="" || p.ref===fr) && (fs==="" || p.status===fs) && (fdm==="" || p.dm.includes(fdm)));
-        
-        document.getElementById('hist-counter').innerText = `Registos: ${filtered.length}`;
-        const groups = {}; const orderedEtiquetas = [];
-        
-        filtered.slice().reverse().forEach(p => {
-            const etiq = p.etiqueta || "SEM_ETIQUETA";
-            if (!groups[etiq]) { groups[etiq] = []; orderedEtiquetas.push(etiq); }
-            groups[etiq].push(p);
-        });
-
-        let html = '';
-        orderedEtiquetas.forEach((etiq, groupIdx) => {
-            const items = groups[etiq];
-            html += `<tr class="group-header" onclick="toggleEtiquetaGroup('${groupIdx}')">
-                <td colspan="6" style="padding: 10px;">📁 Etiqueta: <strong>${etiq === "SEM_ETIQUETA" ? "Sem Etiqueta" : etiq}</strong></td>
-                <td colspan="2" style="padding: 10px; text-align: right;"><strong>(${items.length}) Peças</strong></td>
-            </tr>`;
-            items.forEach(p => {
-                let sCls = p.status === 'OK' ? 'status-ok' : (p.status === 'RETRABALHADA' ? 'status-retrabalhada' : 'status-nok');
-                html += `<tr class="child-row child-of-${groupIdx}">
-                    <td>${p.hora || ''}</td><td>${p.data_producao || ''}</td><td>${p.insp || ''}</td><td>${p.ref || ''}</td><td>${p.missao || ''}</td><td>${p.dm || ''}</td><td>${p.etiqueta || ''}</td><td><span class="status-badge ${sCls}">${p.status || ''}</span></td>
-                </tr>`;
+        function render() {
+            const ent = dbMemory.filter(i => i.tipo === 'Entrada').reduce((a, b) => a + b.qtd, 0);
+            const sai = dbMemory.filter(i => i.tipo === 'Saída').reduce((a, b) => a + b.qtd, 0);
+            document.getElementById('count-reg').innerText = dbMemory.length;
+            document.getElementById('count-ent').innerText = ent;
+            document.getElementById('count-sai').innerText = sai;
+            document.getElementById('count-stk').innerText = ent - sai;
+            document.getElementById('in-resp').innerHTML = resps.map(r => `<option value="${r}">${r}</option>`).join('');
+            document.getElementById('respUI').innerHTML = resps.map((r, idx) => `<div class="d-flex justify-content-between align-items-center bg-light p-2 mb-1 rounded border"><span class="fw-medium">${r}</span><button class="btn btn-sm text-danger p-0" onclick="removeResp(${idx})"><i data-lucide="trash-2" size="14"></i></button></div>`).join('');
+            
+            // Lógica do Novo Separador de Balanço Dinâmico por Referência
+            const balancoPorRef = {};
+            dbMemory.forEach(item => {
+                const ref = item.ref || 'SEM REF';
+                if (!balancoPorRef[ref]) {
+                    balancoPorRef[ref] = { entradas: 0, saidas: 0 };
+                }
+                if (item.tipo === 'Entrada') {
+                    balancoPorRef[ref].entradas += item.qtd;
+                } else if (item.tipo === 'Saída') {
+                    balancoPorRef[ref].saidas += item.qtd;
+                }
             });
-        });
-        document.getElementById('tbody-hist').innerHTML = html;
-    }
 
-    async function updateFilterOptions() {
-        const dbList = await getAllFromDB("historico");
-        document.getElementById('f-insp').innerHTML = '<option value="">Todos</option>' + [...new Set(dbList.map(i => i.insp).filter(Boolean))].map(i => `<option value="${i}">${i}</option>`).join('');
-        document.getElementById('f-ref').innerHTML = '<option value="">Todas</option>' + [...new Set(dbList.map(i => i.ref).filter(Boolean))].map(r => `<option value="${r}">${r}</option>`).join('');
-    }
+            const refsOrdenadas = Object.keys(balancoPorRef).sort();
+            
+            // Filtrar referências para remover as que possuem saldo igual a 0
+            const refsFiltradas = refsOrdenadas.filter(ref => {
+                const totalJaula = balancoPorRef[ref].entradas - balancoPorRef[ref].saidas;
+                return totalJaula !== 0;
+            });
 
-    async function exportExcel() {
-        const dbList = await getAllFromDB("historico");
-        const ws = XLSX.utils.json_to_sheet(dbList.map(i => ({ "Data/Hora Registo": i.hora, "Data Production": i.data_producao, "Inspetor": i.insp, "Referência": i.ref, "Missão": i.missao, "Data Matrix": i.dm, "Etiqueta": i.etiqueta, "Status": i.status })));
-        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Dados"); XLSX.writeFile(wb, "Traca_Export.xlsx");
-    }
+            if (refsFiltradas.length === 0) {
+                document.getElementById('balancoTableBody').innerHTML = `<tr><td colspan="4" class="text-muted p-2">Nenhum registo em base de dados com stock ativo.</td></tr>`;
+            } else {
+                document.getElementById('balancoTableBody').innerHTML = refsFiltradas.map(ref => {
+                    const e = balancoPorRef[ref].entradas;
+                    const s = balancoPorRef[ref].saidas;
+                    const totalJaula = e - s;
 
-    async function clearHistorySecure() { 
-        if(confirm("Limpar local?") && prompt("Digite APAGAR") === "APAGAR") { await clearStore("historico"); await learnReferencePattern(document.getElementById('referencia').value); await renderHist(); } 
-    }
+                    return `
+                        <tr>
+                            <td class="fw-bold text-start ps-3">${ref}</td>
+                            <td class="text-success fw-medium">+ ${e}</td>
+                            <td class="text-danger fw-medium">- ${s}</td>
+                            <td class="fw-bold fs-6">${totalJaula}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
 
-    window.onload = async () => { 
-        updateClock(); 
-        try { 
-            await initIndexedDB(); 
-            updateDatalists(); 
-            updateUI(); 
-            focusDM();
-            await syncFromCloud(); 
-        } catch(e) { 
-            showPopup("Erro DB!", "error"); 
+            // Renderizar tabela de registos normais
+            const filter = document.getElementById('in-filter').value.toLowerCase();
+            document.getElementById('tableBody').innerHTML = dbMemory.filter(i => 
+                i.missao.toLowerCase().includes(filter) || 
+                i.ref.toLowerCase().includes(filter) || 
+                (i.fornecedor && i.fornecedor.toLowerCase().includes(filter)) ||
+                (i.defeitos && i.defeitos.toLowerCase().includes(filter))
+            ).map(i => `
+                <tr>
+                    <td class="ps-3 text-muted" style="font-size:11px">${i.data}</td>
+                    <td class="fw-bold editable-cell" contenteditable="true" onblur="updateField(${i.id}, 'missao', this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${i.missao}</td>
+                    <td class="text-primary fw-medium editable-cell" contenteditable="true" onblur="updateField(${i.id}, 'ref', this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${i.ref}</td>
+                    <td class="fw-medium text-secondary editable-cell" contenteditable="true" onblur="updateField(${i.id}, 'fornecedor', this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${i.fornecedor || '-'}</td>
+                    <td><span class="badge ${i.tipo === 'Entrada' ? 'badge-ent' : 'badge-sai'}">${i.tipo.toUpperCase()}</span></td>
+                    <td class="fw-bold">${i.qtd}</td>
+                    <td class="text-secondary fw-medium">${i.resp || '-'}</td>
+                    <td>${i.dm && i.dm.length > 0 ? `<a class="dm-link" onclick="openDM(${i.id})">${i.dm.length} DM</a>` : '-'}</td>
+                    <td class="text-muted italic editable-cell" contenteditable="true" onblur="updateField(${i.id}, 'defeitos', this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${i.defeitos || '-'}</td>
+                    <td class="text-end pe-3">
+                        <button class="btn btn-sm text-primary me-1" onclick="editRowWizard(${i.id})" title="Editar Outros Campos"><i data-lucide="edit-2" size="14"></i></button>
+                        <button class="btn btn-sm text-secondary" onclick="removeEntry(${i.id})"><i data-lucide="trash-2" size="14"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
         }
-    };
-</script>
+
+        async function sendToGoogleDrive(payload) {
+            const indicator = document.getElementById('cloud-indicator');
+            indicator.innerText = "⏳ A sincronizar...";
+            indicator.className = "cloud-status text-primary";
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                indicator.innerText = "✅ Sincronizado com o Drive";
+                indicator.className = "cloud-status text-success";
+            } catch (error) {
+                console.error("Erro ao enviar para o Drive:", error);
+                indicator.innerText = "❌ Erro Drive (Guardado Local)";
+                indicator.className = "cloud-status text-danger";
+            }
+        }
+
+        // Nova Função para Importar todos os valores guardados na Google Drive via Apps Script (GET)
+        async function importFromDrive() {
+            const btn = document.getElementById('btn-import-drive');
+            const indicator = document.getElementById('cloud-indicator');
+            
+            btn.disabled = true;
+            indicator.innerText = "⏳ A descarregar do Drive...";
+            indicator.className = "cloud-status text-primary";
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'GET',
+                    cache: 'no-cache'
+                });
+
+                if (!response.ok) throw new Error('Falha na resposta do servidor.');
+
+                const dadosDrive = await response.json();
+
+                if (!Array.isArray(dadosDrive)) {
+                    throw new Error('Formato de dados recebido do Drive é inválido.');
+                }
+
+                let novosRegistosContador = 0;
+
+                // Percorrer os dados da Cloud e inseri-los no IndexedDB se não existirem
+                for (const item of dadosDrive) {
+                    // Trata IDs para garantir comparação e campos nulos/padrões
+                    const parsedId = item.id ? parseFloat(item.id) : Date.now() + Math.random();
+                    
+                    // Verifica se o ID já existe na dbMemory local
+                    const existeLocal = dbMemory.some(localItem => localItem.id === parsedId);
+
+                    if (!existeLocal) {
+                        const novoItem = {
+                            id: parsedId,
+                            data: item.data || new Date().toISOString().split('T')[0],
+                            missao: String(item.missao || '').toUpperCase(),
+                            tipo: item.tipo === 'Saída' ? 'Saída' : 'Entrada',
+                            ref: String(item.ref || '').toUpperCase(),
+                            fornecedor: item.fornecedor ? String(item.fornecedor).trim() : '',
+                            qtd: parseInt(item.qtd) || 1,
+                            resp: item.resp || 'Operador Principal',
+                            dm: Array.isArray(item.dm) ? item.dm : (item.dm ? String(item.dm).split(' | ') : []),
+                            defeitos: item.defeitos ? String(item.defeitos).trim() : ''
+                        };
+
+                        await saveMovimentoDB(novoItem);
+                        dbMemory.push(novoItem);
+                        novosRegistosContador++;
+                    }
+                }
+
+                // Voltar a ordenar a memória local de forma decrescente por ID
+                dbMemory.sort((a, b) => b.id - a.id);
+                updateDatalists();
+                render();
+
+                indicator.innerText = `✅ Atualizado! +${novosRegistosContador} itens novos.`;
+                indicator.className = "cloud-status text-success";
+                alert(`Importação concluída com sucesso! Foram adicionados ${novosRegistosContador} novos registos que não estavam no dispositivo.`);
+
+            } catch (error) {
+                console.error("Erro ao importar do Google Drive:", error);
+                indicator.innerText = "❌ Erro ao ler da Nuvem";
+                indicator.className = "cloud-status text-danger";
+                alert("Não foi possível obter os dados da Cloud. Verifique se a sua função 'doGet(e)' está corretamente implementada e publicada no Apps Script.");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('mainForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const novoMovimento = {
+                id: Date.now(), 
+                data: document.getElementById('in-data').value,
+                missao: document.getElementById('in-missao').value.toUpperCase(),
+                tipo: document.getElementById('in-tipo').value, 
+                ref: document.getElementById('in-ref').value.toUpperCase(),
+                fornecedor: document.getElementById('in-fornecedor').value.trim(),
+                qtd: parseInt(document.getElementById('in-qtd').value), 
+                resp: document.getElementById('in-resp').value,
+                dm: document.getElementById('in-dm').value.split('\n').map(s => s.trim()).filter(s => s),
+                defeitos: document.getElementById('in-defeitos').value.trim()
+            };
+
+            await saveMovimentoDB(novoMovimento);
+            dbMemory.unshift(novoMovimento);
+            
+            document.getElementById('mainForm').reset();
+            document.getElementById('in-data').valueAsDate = new Date();
+            
+            updateDatalists();
+            render();
+
+            await sendToGoogleDrive(novoMovimento);
+        };
+
+        function openDM(id) {
+            const item = dbMemory.find(i => i.id === id);
+            document.getElementById('dmListUI').innerHTML = item.dm.map(c => `<li class="list-group-item small font-monospace" style="font-size:10px">${c}</li>`).join('');
+            new bootstrap.Modal(document.getElementById('dmModal')).show();
+        }
+
+        async function addResp() { 
+            const n = document.getElementById('newRespName').value.trim(); 
+            if(n) { 
+                resps.push(n); 
+                document.getElementById('newRespName').value = ''; 
+                await saveConfData("responsáveis", resps);
+                render();
+            } 
+        }
+        
+        async function removeResp(idx) { 
+            if(confirm('Remover?')) { 
+                resps.splice(idx, 1); 
+                await saveConfData("responsáveis", resps);
+                render();
+            } 
+        }
+        
+        async function removeEntry(id) { 
+            if(confirm('Eliminar? (Nota: Isto remove apenas do ecrã local, não altera o histórico cumulativo já enviado para o Drive)')) { 
+                await deleteMovimentoDB(id);
+                dbMemory = dbMemory.filter(i => i.id !== id);
+                updateDatalists();
+                render();
+            } 
+        }
+        
+        async function clearData() { 
+            if(confirm('Apagar tudo localmente?') && prompt('Escreva APAGAR') === 'APAGAR') { 
+                await clearAllDataDB();
+                location.reload(); 
+            } 
+        }
+
+        function exportExcel() {
+            const ws = XLSX.utils.json_to_sheet(dbMemory.map(i => ({ Data: i.data, Missão: i.missao, Referência: i.ref, Fornecedor: i.fornecedor || '', Tipo: i.tipo, Qtd: i.qtd, Resp: i.resp, DM: (i.dm || []).join(' | '), Defeitos: i.defeitos || '' })));
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Stock");
+            XLSX.writeFile(wb, `TRIGO_StockNOK.xlsx`);
+        }
+
+        function importExcel(input) {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                
+                const novosItens = json.map(row => ({ 
+                    id: Date.now() + Math.random(), 
+                    data: row.Data, 
+                    missao: String(row.Missão), 
+                    ref: String(row.Referência), 
+                    fornecedor: row.Fornecedor ? String(row.Fornecedor) : '',
+                    tipo: row.Tipo, 
+                    qtd: row.Qtd, 
+                    resp: row.Resp, 
+                    dm: row.DM ? String(row.DM).split(' | ') : [],
+                    defeitos: row.Defeitos ? String(row.Defeitos) : ''
+                }));
+
+                for(const item of novosItens) {
+                    await saveMovimentoDB(item);
+                }
+
+                dbMemory = [...novosItens, ...dbMemory];
+                updateDatalists();
+                render();
+            };
+            reader.readAsArrayBuffer(input.files[0]);
+        }
+
+        window.onload = async () => { 
+            document.getElementById('in-data').valueAsDate = new Date(); 
+            document.getElementById('in-filter').onkeyup = render; 
+            await initIndexedDB();
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
