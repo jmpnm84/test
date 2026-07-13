@@ -107,8 +107,10 @@
                 
                 <button class="btn btn-sm btn-outline-primary fw-bold" onclick="importFromDrive()" id="btn-import-drive"><i data-lucide="cloud-download" size="16"></i> DRIVE</button>
                 
+                <button class="btn btn-sm btn-outline-success fw-bold" onclick="exportBatchToDrive()" id="btn-export-drive" title="Sincronizar todos os registos"><i data-lucide="upload-cloud" size="16"></i> SYNC ALL</button>
+                
                 <button class="btn btn-sm btn-primary" onclick="exportExcel()"><i data-lucide="download" size="16"></i> EXCEL</button>
-                <span class="app-version ms-1">v3.5.1</span>
+                <span class="app-version ms-1">v3.5.2</span>
             </div>
         </header>
 
@@ -223,7 +225,8 @@
     <div class="offcanvas offcanvas-end" tabindex="-1" id="panelOptions"><div class="offcanvas-header border-bottom"><h5 class="offcanvas-title fw-bold">Configurações</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body"><h6>Responsáveis</h6><div class="input-group mb-3"><input type="text" id="newRespName" class="form-control"><button class="btn btn-primary" onclick="addResp()">Add</button></div><div id="respUI"></div><hr><button class="btn btn-outline-danger w-100 btn-sm" onclick="clearData()">LIMPAR TUDO</button></div></div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyZ_0yPVRGCoh7rTDbfpBEW1rUjYotoYxPtcbhKZyL78ue6e_qnWhjFNuLLOFPGVus54g/exec";
+        // URL Corrigido do Apps Script
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUuYrEnKlp39gLNDzEsDlWjENTA2PZt8Tc-xRpcjgU7WM2uwOtZOc6lIcyzoRGYgDnsw/exec";
 
         let dbIndexed;
         let dbMemory = [];
@@ -473,8 +476,40 @@
                 indicator.className = "cloud-status text-danger";
             }
         }
+        
+        // Nova Função para Exportar em Lote (SYNC ALL)
+        async function exportBatchToDrive() {
+            const btn = document.getElementById('btn-export-drive');
+            const indicator = document.getElementById('cloud-indicator');
+            
+            if (!confirm('Sincronizar TODOS os registos locais para o Drive?')) return;
 
-        // Nova Função para Importar todos os valores guardados na Google Drive via Apps Script (GET)
+            btn.disabled = true;
+            indicator.innerText = "⏳ A enviar lote...";
+            indicator.className = "cloud-status text-primary";
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ batch: dbMemory })
+                });
+                
+                indicator.innerText = "✅ Sincronizado!";
+                indicator.className = "cloud-status text-success";
+                alert('Lote sincronizado com sucesso!');
+            } catch (error) {
+                console.error("Erro no envio em lote:", error);
+                indicator.innerText = "❌ Erro na Sincronização";
+                indicator.className = "cloud-status text-danger";
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Função para Importar todos os valores guardados na Google Drive via Apps Script (GET)
         async function importFromDrive() {
             const btn = document.getElementById('btn-import-drive');
             const indicator = document.getElementById('cloud-indicator');
@@ -499,12 +534,8 @@
 
                 let novosRegistosContador = 0;
 
-                // Percorrer os dados da Cloud e inseri-los no IndexedDB se não existirem
                 for (const item of dadosDrive) {
-                    // Trata IDs para garantir comparação e campos nulos/padrões
                     const parsedId = item.id ? parseFloat(item.id) : Date.now() + Math.random();
-                    
-                    // Verifica se o ID já existe na dbMemory local
                     const existeLocal = dbMemory.some(localItem => localItem.id === parsedId);
 
                     if (!existeLocal) {
@@ -527,7 +558,6 @@
                     }
                 }
 
-                // Voltar a ordenar a memória local de forma decrescente por ID
                 dbMemory.sort((a, b) => b.id - a.id);
                 updateDatalists();
                 render();
