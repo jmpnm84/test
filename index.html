@@ -65,22 +65,9 @@
         .status-retrabalhada { background-color: var(--ret); }
         .status-nok { background-color: var(--nok); }
         
-        /* Melhoria do Acordeão */
         .accordion-container { margin-top: 10px; }
         .accordion-group { margin-bottom: 12px; border: 1px solid #dcdcdc; border-radius: 8px; overflow: hidden; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .accordion-header { 
-            background: #f8f9fa; 
-            padding: 15px; 
-            cursor: pointer; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            font-weight: bold; 
-            font-size: 13px;
-            color: var(--p-dark);
-            border-bottom: 1px solid #eee;
-            transition: all 0.2s ease;
-        }
+        .accordion-header { background: #f8f9fa; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 13px; color: var(--p-dark); border-bottom: 1px solid #eee; transition: all 0.2s ease; }
         .accordion-header:hover { background: #f0f4f8; }
         .accordion-header.active { background: var(--p); color: white; border-bottom-color: transparent; }
         .accordion-toggle { font-size: 12px; transition: transform 0.3s; }
@@ -94,6 +81,10 @@
         .accordion-table tr:hover { background: #fafafa; }
         .etiq-badge { background: #e0e0e0; color: #333; padding: 3px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #ccc; }
         .accordion-header.active .etiq-badge { background: white; color: var(--p); }
+        
+        /* Paginação */
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; padding: 10px; color: white; }
+        .btn-page { background: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -112,7 +103,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v3.3.2</span>
+            <span class="version-text">v3.4.1</span>
         </div>
     </header>
 
@@ -177,12 +168,13 @@
             </div>
         </div>
         <div class="filter-bar">
-            <div><label>Inspetor</label><select id="f-insp" onchange="renderHist()"></select></div>
-            <div><label>Ref</label><select id="f-ref" onchange="renderHist()"></select></div>
-            <div><label>Status</label><select id="f-status" onchange="renderHist()"><option value="">Tudo</option><option value="OK">OK</option><option value="RETRABALHADA">RETRABALHADA</option><option value="NOK">NOK</option></select></div>
-            <div><label>Pesquisar DM</label><input type="text" id="f-dm-search" oninput="renderHist()"></div>
+            <div><label>Inspetor</label><select id="f-insp" onchange="currentPage=1; renderHist()"></select></div>
+            <div><label>Ref</label><select id="f-ref" onchange="currentPage=1; renderHist()"></select></div>
+            <div><label>Status</label><select id="f-status" onchange="currentPage=1; renderHist()"><option value="">Tudo</option><option value="OK">OK</option><option value="RETRABALHADA">RETRABALHADA</option><option value="NOK">NOK</option></select></div>
+            <div><label>Pesquisar DM</label><input type="text" id="f-dm-search" oninput="currentPage=1; renderHist()"></div>
         </div>
         <div id="accordion-container" class="accordion-container"></div>
+        <div id="pagination-controls" class="pagination"></div>
     </section>
 </main>
 
@@ -225,6 +217,10 @@
     let bufferOK = [];
     let bufferNOK = [];
     let tempDM = null, currentLoteType = "";
+    
+    // Paginação
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
     function initIndexedDB() {
         return new Promise((resolve, reject) => {
@@ -437,12 +433,10 @@
 
     function toggleAccordion(element) {
         const isActive = element.classList.contains('active');
-        // Fechar todos
         document.querySelectorAll('.accordion-header').forEach(h => {
             h.classList.remove('active');
             h.nextElementSibling.classList.remove('active');
         });
-        // Abrir se não estava ativo
         if (!isActive) {
             element.classList.add('active');
             element.nextElementSibling.classList.add('active');
@@ -464,8 +458,14 @@
             grouped[etiq].push(item);
         });
 
+        const groups = Object.keys(grouped).sort().reverse();
+        const totalPages = Math.ceil(groups.length / itemsPerPage);
+        if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+
+        const paginatedGroups = groups.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
         let html = '';
-        Object.keys(grouped).sort().reverse().forEach(etiq => {
+        paginatedGroups.forEach(etiq => {
             const items = grouped[etiq];
             html += `
             <div class="accordion-group">
@@ -499,6 +499,23 @@
 
         document.getElementById('accordion-container').innerHTML = html || '<p style="text-align:center; color:#fff; padding:20px;">Nenhum registro encontrado</p>';
         document.getElementById('hist-counter').innerText = `Registos: ${filtered.length}`;
+        
+        // Paginação
+        const pagControls = document.getElementById('pagination-controls');
+        if (totalPages > 1) {
+            pagControls.innerHTML = `
+                <button class="btn-page" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>&lt;</button>
+                <span>Pág ${currentPage} de ${totalPages}</span>
+                <button class="btn-page" onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>&gt;</button>
+            `;
+        } else {
+            pagControls.innerHTML = '';
+        }
+    }
+
+    function changePage(dir) {
+        currentPage += dir;
+        renderHist();
     }
 
     async function updateFilterOptions() {
@@ -518,7 +535,7 @@
     }
 
     async function clearHistorySecure() { 
-        if(confirm("Limpar tudo?") && prompt("Digite APAGAR") === "APAGAR") { await clearStore("historico"); await renderHist(); } 
+        if(confirm("Limpar tudo?") && prompt("Digite APAGAR") === "APAGAR") { await clearStore("historico"); currentPage=1; await renderHist(); } 
     }
 
     window.onload = async () => { 
