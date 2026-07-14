@@ -1,0 +1,15 @@
+{
+  "name": "TRIGO Rastreabilidade",
+  "short_name": "TRIGO",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#005596",
+  "icons": [
+    {
+      "src": "https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
