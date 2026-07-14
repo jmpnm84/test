@@ -51,7 +51,8 @@
         .buffer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .buffer-box { background: #fff; border-radius: 6px; height: 250px; display: flex; flex-direction: column; border: 1px solid #eee; overflow: hidden; }
         .buffer-header { color: white; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 10px; min-height: 50px; }
-        .btn-mini-finish { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 0 12px; border-radius: 4px; cursor: pointer; height: 44px; min-width: 70px; font-weight: bold; }
+        .btn-mini-finish { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 0 12px; border-radius: 4px; cursor: pointer; height: 44px; min-width: 70px; }
+        .btn-mini-finish:hover { background: rgba(255,255,255,0.3); }
         .table-wrapper { max-height: 450px; overflow-y: auto; background: white; border-radius: 4px; }
         table { width:100%; border-collapse: collapse; font-size: 10px; }
         thead th { position: sticky; top: 0; background:#f2f2f2; padding: 8px; text-align: left; color: var(--p-dark); z-index: 5; }
@@ -60,13 +61,47 @@
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:1000; }
         .modal-content { background:white; padding:15px; border-radius:10px; text-align:center; width:95%; max-width:320px; }
         .btn-decision { padding: 12px; font-size: 0.9em; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: white; margin-bottom: 6px; width: 100%; }
-        #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 9999; display: none; font-size: 12px; white-space: nowrap; }
+        #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 9999; display: none; font-size: 12px; }
         .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
         .buffer-item:hover { background: #fff5f5; color: var(--nok); }
         .status-badge { font-weight: bold; text-align: center; border-radius: 4px; padding: 3px 6px; display: inline-block; color: white; min-width: 90px; }
         .status-ok { background-color: var(--ok); }
         .status-retrabalhada { background-color: var(--ret); }
         .status-nok { background-color: var(--nok); }
+        
+        /* Estilos Acordeão */
+        .accordion-container { margin-top: 10px; }
+        .accordion-group { margin-bottom: 8px; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+        .accordion-header { 
+            background: linear-gradient(135deg, var(--p-dark) 0%, var(--p) 100%); 
+            color: white; 
+            padding: 12px; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-weight: bold; 
+            font-size: 12px;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .accordion-header:hover { background: linear-gradient(135deg, var(--p) 0%, var(--p-dark) 100%); }
+        .accordion-header.active { background: linear-gradient(135deg, #003f73 0%, #0a3a66 100%); }
+        .accordion-toggle { font-size: 14px; transition: transform 0.2s; }
+        .accordion-header.active .accordion-toggle { transform: rotate(180deg); }
+        .accordion-content { 
+            display: none; 
+            max-height: 500px; 
+            overflow-y: auto; 
+            background: #fafafa;
+        }
+        .accordion-content.active { display: block; }
+        .accordion-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+        .accordion-table th { background: #f0f0f0; padding: 6px; text-align: left; color: var(--p-dark); font-weight: bold; border-bottom: 2px solid #ddd; }
+        .accordion-table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+        .accordion-table tr:hover { background: #f5f5f5; }
+        .etiq-badge { background: var(--p); color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold; }
+        .etiq-count { background: rgba(0,0,0,0.1); color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; }
     </style>
 </head>
 <body>
@@ -145,7 +180,7 @@
             <span id="hist-counter">Registos: 0</span>
             <div style="display:flex; gap:5px; flex-wrap: wrap;">
                 <button onclick="exportExcel()" style="background:var(--ok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">📤 EXCEL</button>
-                <button onclick="exportToGoogleDriveManual()" style="background:#00a3ff; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight: bold;">☁️ ENVIAR DRIVE</button>
+                <button onclick="exportToGoogleDriveManual()" style="background:#00a3ff; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight: bold;">☁️ ENVIA DRIVE</button>
                 <button onclick="clearHistorySecure()" style="background:var(--nok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">LIMPAR</button>
             </div>
         </div>
@@ -155,22 +190,7 @@
             <div><label>Status</label><select id="f-status" onchange="renderHist()"><option value="">Tudo</option><option value="OK">OK</option><option value="RETRABALHADA">RETRABALHADA</option><option value="NOK">NOK</option></select></div>
             <div><label>Pesquisar DM</label><input type="text" id="f-dm-search" oninput="renderHist()"></div>
         </div>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Data/Hora Registo</th>
-                        <th>Data Produção</th>
-                        <th>Insp</th>
-                        <th>Ref</th>
-                        <th>Missão</th>
-                        <th>DM</th>
-                        <th>Etiqueta</th>
-                        <th>Status</th> </tr>
-                </thead>
-                <tbody id="tbody-hist"></tbody>
-            </table>
-        </div>
+        <div id="accordion-container" class="accordion-container"></div>
     </section>
 </main>
 
@@ -423,6 +443,24 @@
         document.getElementById('dl-missoes').innerHTML = memory.missions.map(m => `<option value="${m}">`).join('');
     }
 
+    function toggleAccordion(element) {
+        const header = element;
+        const content = header.nextElementSibling;
+        const isActive = header.classList.contains('active');
+        
+        // Fechar todos os outros acordeões
+        document.querySelectorAll('.accordion-header').forEach(h => {
+            if(h !== header) {
+                h.classList.remove('active');
+                h.nextElementSibling.classList.remove('active');
+            }
+        });
+        
+        // Toggle atual
+        header.classList.toggle('active');
+        content.classList.toggle('active');
+    }
+
     async function renderHist() {
         const fi = document.getElementById('f-insp').value;
         const fr = document.getElementById('f-ref').value;
@@ -430,12 +468,71 @@
         const fdm = document.getElementById('f-dm-search').value.trim().toUpperCase();
         const dbList = await getAllFromDB("historico");
         const filtered = dbList.filter(p => (fi==="" || p.insp===fi) && (fr==="" || p.ref===fr) && (fs==="" || p.status===fs) && (fdm==="" || p.dm.includes(fdm)));
-        document.getElementById('tbody-hist').innerHTML = filtered.slice().reverse().map(p => `<tr>
-                <td>${p.hora || ''}</td><td>${p.data_producao || ''}</td><td>${p.insp || ''}</td>
-                <td>${p.ref || ''}</td><td>${p.missao || ''}</td><td>${p.dm || ''}</td>
-                <td>${p.etiqueta || ''}</td>
-                <td><span class="status-badge ${p.status === 'OK' ? 'status-ok' : (p.status === 'RETRABALHADA' ? 'status-retrabalhada' : 'status-nok')}">${p.status || ''}</span></td>
-            </tr>`).join('');
+        
+        // Agrupar por etiqueta
+        const grouped = {};
+        filtered.forEach(item => {
+            const etiq = item.etiqueta || 'SEM ETIQUETA';
+            if(!grouped[etiq]) grouped[etiq] = [];
+            grouped[etiq].push(item);
+        });
+
+        // Render acordeão
+        let html = '';
+        Object.keys(grouped).sort().reverse().forEach(etiq => {
+            const items = grouped[etiq];
+            const statusCounts = {
+                OK: items.filter(i => i.status === 'OK').length,
+                NOK: items.filter(i => i.status === 'NOK').length,
+                RETRABALHADA: items.filter(i => i.status === 'RETRABALHADA').length
+            };
+            
+            html += `
+            <div class="accordion-group">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    <div>
+                        <span class="etiq-badge">${etiq}</span>
+                        <span style="margin-left:12px; font-size:11px;">${items.length} peça${items.length !== 1 ? 's' : ''}</span>
+                        <span style="margin-left:8px; font-size:10px; opacity:0.9;">
+                            ✓ ${statusCounts.OK} | ✗ ${statusCounts.NOK} | ↺ ${statusCounts.RETRABALHADA}
+                        </span>
+                    </div>
+                    <span class="accordion-toggle">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <table class="accordion-table">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Produção</th>
+                                <th>Insp</th>
+                                <th>Ref</th>
+                                <th>Missão</th>
+                                <th>DM</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.slice().reverse().map(p => `
+                            <tr>
+                                <td>${p.hora || ''}</td>
+                                <td>${p.data_producao || ''}</td>
+                                <td>${p.insp || ''}</td>
+                                <td>${p.ref || ''}</td>
+                                <td>${p.missao || ''}</td>
+                                <td style="font-weight:bold;">${p.dm || ''}</td>
+                                <td><span class="status-badge ${p.status === 'OK' ? 'status-ok' : (p.status === 'RETRABALHADA' ? 'status-retrabalhada' : 'status-nok')}">${p.status || ''}</span></td>
+                            </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            `;
+        });
+
+        document.getElementById('accordion-container').innerHTML = html || '<p style="text-align:center; color:#999;">Nenhum registro encontrado</p>';
+        document.getElementById('hist-counter').innerText = `Registos: ${filtered.length}`;
     }
 
     async function updateFilterOptions() {
