@@ -1,15 +1,20 @@
 {
   "name": "TRIGO Rastreabilidade",
   "short_name": "TRIGO",
-  "start_url": "./index.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#f4f7f6",
   "theme_color": "#005596",
   "icons": [
     {
-      "src": "https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675",
+      "src": "https://github.com/user-attachments/assets/78790071-93f2-4de7-8db4-dcb8cc28b45b",
       "type": "image/png",
       "sizes": "512x512"
+    },
+    {
+      "src": "https://github.com/user-attachments/assets/78790071-93f2-4de7-8db4-dcb8cc28b45b",
+      "type": "image/png",
+      "sizes": "192x192"
     }
   ]
 }
