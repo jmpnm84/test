@@ -8,7 +8,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>TRIGO - Rastreabilidade Peças PTCNT</title>
     
-    <!-- Bloco Firebase: Inicialização -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
@@ -33,10 +32,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        :root { 
-            --p: #005596; --p-dark: #0e4c85; --ok: #27ae60; --nok: #c0392b; 
-            --ret: #f39c12; --bg: #f4f7f6; --trigo-green: #97d700;
-        }
+        :root { --p: #005596; --p-dark: #0e4c85; --ok: #27ae60; --nok: #c0392b; --ret: #f39c12; --bg: #f4f7f6; --trigo-green: #97d700; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 5px; color: #333; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
@@ -55,8 +51,7 @@
         input, select { width: 100%; padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 13px; height: 34px; }
         .dash { display: flex; gap: 8px; margin-bottom: 10px; }
         .counter-card { flex: 1; padding: 8px; border-radius: 6px; color: white; text-align: center; position: relative; }
-        .c-ok { background: var(--ok); } 
-        .c-nok { background: var(--nok); }
+        .c-ok { background: var(--ok); } .c-nok { background: var(--nok); }
         .counter-card h2 { margin: 0; font-size: 1.2em; }
         .perc-badge { position: absolute; top: 5px; right: 8px; font-size: 9px; background: rgba(0,0,0,0.2); padding: 2px 5px; border-radius: 10px; }
         .progress-box { width: 100%; height: 5px; background: rgba(0,0,0,0.15); border-radius: 3px; margin-top: 6px; overflow: hidden; }
@@ -67,18 +62,13 @@
         .buffer-box { background: #fff; border-radius: 6px; height: 250px; display: flex; flex-direction: column; border: 1px solid #eee; overflow: hidden; }
         .buffer-header { color: white; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 10px; min-height: 50px; }
         .btn-mini-finish { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 0 12px; border-radius: 4px; cursor: pointer; height: 44px; min-width: 70px; font-weight: bold; }
-        .table-wrapper { max-height: 450px; overflow-y: auto; background: white; border-radius: 4px; }
-        table { width:100%; border-collapse: collapse; font-size: 10px; }
-        thead th { position: sticky; top: 0; background:#f2f2f2; padding: 8px; text-align: left; color: var(--p-dark); z-index: 5; }
-        td { padding: 6px 8px; border-bottom: 1px solid #eee; }
-        .filter-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 10px; }
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:1000; }
         .modal-content { background:white; padding:15px; border-radius:10px; text-align:center; width:95%; max-width:320px; }
         .btn-decision { padding: 12px; font-size: 0.9em; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: white; margin-bottom: 6px; width: 100%; }
         #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 9999; display: none; font-size: 12px; white-space: nowrap; }
         .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
         .buffer-item:hover { background: #fff5f5; color: var(--nok); }
-        .status-badge { font-weight: bold; text-align: center; border-radius: 4px; padding: 3px 6px; display: inline-block; color: white; min-width: 90px; }
+        .status-badge { font-weight: bold; text-align: center; border-radius: 4px; padding: 3px 6px; display: inline-block; color: white; min-width: 70px; }
         .status-ok { background-color: var(--ok); }
         .status-retrabalhada { background-color: var(--ret); }
         .status-nok { background-color: var(--nok); }
@@ -100,7 +90,7 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v4.0.1</span>
+            <span class="version-text">v4.1.1</span>
         </div>
     </header>
 
@@ -152,37 +142,16 @@
         </div>
     </section>
 
+    <!-- HISTÓRICO ATUALIZADO COM ACORDEÃO -->
     <section id="view-historico" style="display:none; background: var(--p-dark); padding: 10px; border-radius: 6px;">
         <div class="hist-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: white; font-size: 11px;">
-            <span id="hist-counter">Registos: 0</span>
-            <div style="display:flex; gap:5px; flex-wrap: wrap;">
+            <span id="hist-counter">Registos Agrupados por Etiqueta</span>
+            <div style="display:flex; gap:5px;">
                 <button onclick="exportExcel()" style="background:var(--ok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">📤 EXCEL</button>
                 <button onclick="clearHistorySecure()" style="background:var(--nok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">LIMPAR</button>
             </div>
         </div>
-        <div class="filter-bar">
-            <div><label>Inspetor</label><select id="f-insp" onchange="renderHist()"></select></div>
-            <div><label>Ref</label><select id="f-ref" onchange="renderHist()"></select></div>
-            <div><label>Status</label><select id="f-status" onchange="renderHist()"><option value="">Tudo</option><option value="OK">OK</option><option value="RETRABALHADA">RETRABALHADA</option><option value="NOK">NOK</option></select></div>
-            <div><label>Pesquisar DM</label><input type="text" id="f-dm-search" oninput="renderHist()"></div>
-        </div>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Data/Hora Registo</th>
-                        <th>Data Produção</th>
-                        <th>Insp</th>
-                        <th>Ref</th>
-                        <th>Missão</th>
-                        <th>DM</th>
-                        <th>Etiqueta</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-hist"></tbody>
-            </table>
-        </div>
+        <div id="hist-accordion" style="display: flex; flex-direction: column; gap: 5px;"></div>
     </section>
 </main>
 
@@ -213,34 +182,24 @@
 <datalist id="dl-missoes"></datalist>
 
 <script>
-    // Configurações e Variáveis
     let dbInstance = null;
     let memory = { users:[], refs:{}, missions:[] };
     let bufferOK = [];
     let bufferNOK = [];
     let tempDM = null, currentLoteType = "";
 
-    // Lógica Firebase (Adaptada para ser assíncrona)
     async function sendToFirebase(lote) {
         try {
             const colRef = window.collection(window.db, "registos");
-            for (const item of lote) {
-                await window.addDoc(colRef, item);
-            }
+            for (const item of lote) { await window.addDoc(colRef, item); }
             showPopup("Dados sincronizados no Firebase!");
             return true;
-        } catch (e) {
-            console.error(e);
-            showPopup("Erro ao enviar para Firebase", "error");
-            return false;
-        }
+        } catch (e) { showPopup("Erro ao enviar para Firebase", "error"); return false; }
     }
 
-    // Inicialização IndexedDB
     function initIndexedDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open("TrigoDB", 1);
-            request.onerror = (e) => reject("Erro ao abrir IndexedDB");
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains("historico")) db.createObjectStore("historico", { keyPath: "dm" });
@@ -256,43 +215,41 @@
 
     function getFromDB(storeName, key) {
         return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readonly");
-            const request = transaction.objectStore(storeName).get(key);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => resolve(null);
+            const tx = dbInstance.transaction([storeName], "readonly");
+            const req = tx.objectStore(storeName).get(key);
+            req.onsuccess = () => resolve(req.result);
         });
     }
 
     function getAllFromDB(storeName) {
         return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readonly");
-            const request = transaction.objectStore(storeName).getAll();
-            request.onsuccess = () => resolve(request.result || []);
-            request.onerror = () => resolve([]);
+            const tx = dbInstance.transaction([storeName], "readonly");
+            const req = tx.objectStore(storeName).getAll();
+            req.onsuccess = () => resolve(req.result || []);
         });
     }
 
     function saveToDB(storeName, key, value) {
         return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readwrite");
-            transaction.objectStore(storeName).put(value, key);
-            transaction.oncomplete = () => resolve(true);
+            const tx = dbInstance.transaction([storeName], "readwrite");
+            tx.objectStore(storeName).put(value, key);
+            tx.oncomplete = () => resolve(true);
         });
     }
 
     function savePieceToHist(item) {
         return new Promise((resolve) => {
-            const transaction = dbInstance.transaction(["historico"], "readwrite");
-            transaction.objectStore("historico").put(item);
-            transaction.oncomplete = () => resolve(true);
+            const tx = dbInstance.transaction(["historico"], "readwrite");
+            tx.objectStore("historico").put(item);
+            tx.oncomplete = () => resolve(true);
         });
     }
 
     function clearStore(storeName) {
         return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readwrite");
-            transaction.objectStore(storeName).clear();
-            transaction.oncomplete = () => resolve(true);
+            const tx = dbInstance.transaction([storeName], "readwrite");
+            tx.objectStore(storeName).clear();
+            tx.oncomplete = () => resolve(true);
         });
     }
 
@@ -318,13 +275,13 @@
         document.getElementById('view-historico').style.display = t === 'historico' ? 'block' : 'none';
         document.getElementById('btn-reg').classList.toggle('active', t === 'registo');
         document.getElementById('btn-hist').classList.toggle('active', t === 'historico');
-        if(t === 'historico') { await updateFilterOptions(); await renderHist(); } else { focusDM(); }
+        if(t === 'historico') { await renderHist(); } else { focusDM(); }
     }
 
     function showPopup(msg, type = 'success') {
         const toast = document.getElementById('custom-toast');
         toast.innerText = msg;
-        toast.style.background = type === 'success' ? 'var(--ok)' : (type === 'error' ? 'var(--nok)' : 'var(--p)');
+        toast.style.background = type === 'success' ? 'var(--ok)' : 'var(--nok)';
         toast.style.display = 'block';
         setTimeout(() => { toast.style.display = 'none'; }, 2500);
     }
@@ -333,21 +290,13 @@
         const etiq = document.getElementById('etiq-final').value.trim();
         const data = document.getElementById('data-fecho-lote').value;
         const lote = (currentLoteType === "OK") ? bufferOK : bufferNOK;
-        
-        for (let i of lote) { 
-            i.etiqueta = etiq; 
-            i.data_producao = data; 
-            await savePieceToHist(i); 
-        }
-        
-        // Chamada Firebase
+        for (let i of lote) { i.etiqueta = etiq; i.data_producao = data; await savePieceToHist(i); }
         await sendToFirebase(lote);
-        
         if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
-        await saveBuffers(); 
+        await saveBuffers();
         document.getElementById('modal-fecho').style.display = 'none';
-        updateUI(); 
-        showPopup("Lote Finalizado!"); 
+        updateUI();
+        showPopup("Lote Finalizado!");
         focusDM();
     }
 
@@ -384,14 +333,7 @@
     }
 
     async function applyStatus(status) {
-        const item = {
-            insp: document.getElementById('inspetor').value.trim(),
-            ref: document.getElementById('referencia').value.toUpperCase().trim(),
-            missao: document.getElementById('missao').value.trim(),
-            dm: tempDM, 
-            status: status,
-            hora: new Date().toLocaleString('pt-PT')
-        };
+        const item = { insp: document.getElementById('inspetor').value.trim(), ref: document.getElementById('referencia').value.toUpperCase().trim(), missao: document.getElementById('missao').value.trim(), dm: tempDM, status: status, hora: new Date().toLocaleString('pt-PT') };
         if(item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
         if(item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
         memory.refs[item.ref] = document.getElementById('quantidade').value;
@@ -422,19 +364,36 @@
         document.getElementById('dl-missoes').innerHTML = memory.missions.map(m => `<option value="${m}">`).join('');
     }
 
+    // FUNÇÃO RENDERHIST ATUALIZADA PARA ACORDEÃO
     async function renderHist() {
         const dbList = await getAllFromDB("historico");
-        document.getElementById('tbody-hist').innerHTML = dbList.slice().reverse().map(p => `<tr>
-            <td>${p.hora}</td><td>${p.data_producao || ''}</td><td>${p.insp}</td><td>${p.ref}</td>
-            <td>${p.missao}</td><td>${p.dm}</td><td>${p.etiqueta || ''}</td>
-            <td><span class="status-badge status-${p.status.toLowerCase()}">${p.status}</span></td>
-        </tr>`).join('');
-    }
+        const container = document.getElementById('hist-accordion');
+        const agrupado = dbList.reduce((acc, item) => {
+            const etiq = item.etiqueta || "SEM ETIQUETA";
+            if (!acc[etiq]) acc[etiq] = [];
+            acc[etiq].push(item);
+            return acc;
+        }, {});
 
-    async function updateFilterOptions() {
-        const dbList = await getAllFromDB("historico");
-        const insps = [...new Set(dbList.map(i => i.insp).filter(Boolean))];
-        document.getElementById('f-insp').innerHTML = '<option value="">Todos</option>' + insps.map(i => `<option value="${i}">${i}</option>`).join('');
+        container.innerHTML = Object.keys(agrupado).reverse().map(etiqueta => `
+            <div style="background:white; border-radius:4px; overflow:hidden;">
+                <div onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'" 
+                     style="padding:10px; background:#eee; cursor:pointer; font-weight:bold; font-size:11px; display:flex; justify-content:space-between;">
+                    <span>🏷️ ${etiqueta} (${agrupado[etiqueta].length} peças)</span>
+                    <span>▼</span>
+                </div>
+                <div style="display:none; padding:5px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:9px;">
+                        <thead><tr style="background:#f4f4f4;"><th>Hora</th><th>Ref</th><th>DM</th><th>Status</th></tr></thead>
+                        <tbody>${agrupado[etiqueta].map(p => `
+                            <tr style="border-bottom:1px solid #eee;">
+                                <td>${p.hora}</td><td>${p.ref}</td><td>${p.dm}</td>
+                                <td><span class="status-badge status-${p.status.toLowerCase()}">${p.status}</span></td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>`).join('');
     }
 
     async function exportExcel() {
@@ -446,13 +405,11 @@
     }
 
     async function clearHistorySecure() { 
-        if(confirm("Limpar?") && prompt("Digite APAGAR") === "APAGAR") { await clearStore("historico"); await renderHist(); } 
+        if(confirm("Limpar todo o histórico?") && prompt("Digite APAGAR") === "APAGAR") { await clearStore("historico"); await renderHist(); } 
     }
 
     window.onload = async () => { 
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
-        }
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err)); }
         await initIndexedDB(); 
         updateDatalists(); 
         updateUI(); 
