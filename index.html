@@ -8,12 +8,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>TRIGO - Rastreabilidade Peças PTCNT</title>
     
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRSSUdPIFJhc3RyZWFiaWxpZGFkZSIsCiAgInNob3J0X25hbWUiOiAiVFJJR08iLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0Zjc2NiIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDU1OTYiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJodHRwczovL2dpdGh1Yi5jb20vdXNlci1hdHRhY2htZW50cy9hc3NldHMvNzg3OTAwNzEtOTNmMi00ZGU3LThkYjQtZGNiOGNjMjhiNDViIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9LAogICAgewogICAgICAic3JjIjogImh0dHBzOi8vZ2l0aHViLmNvbS91c2VyLWF0dGFjaG1lbnRzL2Fzc2V0cy83ODc5MDA3MS05M2YyLTRkZTctOGRiNC1kY2I4Y2MyOGI0NWIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIKICAgIH0KICBdCn0=">
+    <link rel="manifest" href="manifest.json">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        /* 1. VARIÁVEIS E GERAL */
         :root { 
             --p: #005596; 
             --p-dark: #0e4c85; 
@@ -23,29 +22,22 @@
             --bg: #f4f7f6;
             --trigo-green: #97d700;
         }
-        
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 5px; color: #333; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        
         .logo-container { display: flex; flex-direction: column; align-items: flex-end; }
         .logo-img { height: 45px; width: auto; object-fit: contain; }
         .version-text { font-size: 10px; font-weight: bold; color: #888; margin-top: 2px; font-family: monospace; }
-
         #datetime-container { text-align: center; font-family: 'Courier New', Courier, monospace; color: var(--p-dark); line-height: 1.2; }
         #live-date { font-size: 11px; font-weight: bold; display: block; }
         #live-time { font-size: 14px; font-weight: 900; display: block; }
-
         .tabs { display: flex; gap: 3px; }
         .tab-btn { padding: 8px 12px; border: none; cursor: pointer; background: #ddd; color: #666; font-weight: bold; border-radius: 4px 4px 0 0; font-size: 11px; transition: 0.2s; }
         .tab-btn.active { background: var(--p); color: white; }
-
         .header-section { background: var(--p-dark); padding: 10px; border-radius: 6px; margin-bottom: 10px; }
         .inputs-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
         label { display: block; font-size: 10px; font-weight: bold; margin-bottom: 3px; color: #ffffff; text-transform: uppercase; }
         input, select { width: 100%; padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 13px; height: 34px; }
-
         .dash { display: flex; gap: 8px; margin-bottom: 10px; }
         .counter-card { flex: 1; padding: 8px; border-radius: 6px; color: white; text-align: center; position: relative; }
         .c-ok { background: var(--ok); } 
@@ -54,30 +46,23 @@
         .perc-badge { position: absolute; top: 5px; right: 8px; font-size: 9px; background: rgba(0,0,0,0.2); padding: 2px 5px; border-radius: 10px; }
         .progress-box { width: 100%; height: 5px; background: rgba(0,0,0,0.15); border-radius: 3px; margin-top: 6px; overflow: hidden; }
         .progress-bar { height: 100%; background: #fff; width: 0%; transition: width 0.3s ease; }
-
         .scan-area { background: #2c3e50; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 10px; }
         #input-dm { width: 100%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); color: white; font-size: 14px; outline: none; }
-
         .buffer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .buffer-box { background: #fff; border-radius: 6px; height: 250px; display: flex; flex-direction: column; border: 1px solid #eee; overflow: hidden; }
         .buffer-header { color: white; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 10px; min-height: 50px; }
         .btn-mini-finish { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 0 12px; border-radius: 4px; cursor: pointer; height: 44px; min-width: 70px; font-weight: bold; }
-
         .table-wrapper { max-height: 450px; overflow-y: auto; background: white; border-radius: 4px; }
         table { width:100%; border-collapse: collapse; font-size: 10px; }
         thead th { position: sticky; top: 0; background:#f2f2f2; padding: 8px; text-align: left; color: var(--p-dark); z-index: 5; }
         td { padding: 6px 8px; border-bottom: 1px solid #eee; }
         .filter-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 10px; }
-
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:1000; }
         .modal-content { background:white; padding:15px; border-radius:10px; text-align:center; width:95%; max-width:320px; }
         .btn-decision { padding: 12px; font-size: 0.9em; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: white; margin-bottom: 6px; width: 100%; }
         #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 9999; display: none; font-size: 12px; white-space: nowrap; }
-        
         .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
         .buffer-item:hover { background: #fff5f5; color: var(--nok); }
-
-        /* Estilos de Cores para o Status no Histórico */
         .status-badge { font-weight: bold; text-align: center; border-radius: 4px; padding: 3px 6px; display: inline-block; color: white; min-width: 90px; }
         .status-ok { background-color: var(--ok); }
         .status-retrabalhada { background-color: var(--ret); }
@@ -107,10 +92,7 @@
     <section id="view-registo">
         <div class="header-section">
             <div class="inputs-row">
-                <div>
-                    <label>Inspetor</label>
-                    <input type="text" id="inspetor" list="dl-inspetores">
-                </div>
+                <div><label>Inspetor</label><input type="text" id="inspetor" list="dl-inspetores"></div>
                 <div><label>Referência</label><input type="text" id="referencia" list="dl-refs" onchange="autoQty(this.value)"></div>
                 <div><label>Missão</label><input type="text" id="missao" list="dl-missoes"></div>
                 <div><label>QTD</label><input type="number" id="quantidade" min="1" onchange="updateUI()"></div>
@@ -181,7 +163,8 @@
                         <th>Missão</th>
                         <th>DM</th>
                         <th>Etiqueta</th>
-                        <th>Status</th> </tr>
+                        <th>Status</th>
+                    </tr>
                 </thead>
                 <tbody id="tbody-hist"></tbody>
             </table>
@@ -217,34 +200,13 @@
 
 <script>
     if ('serviceWorker' in navigator) {
-        const swCode = `
-            const CACHE_NAME = 'trigo-v17';
-            self.addEventListener('install', e => {
-                e.waitUntil(
-                    caches.open(CACHE_NAME).then(cache => cache.addAll(['./']))
-                    .then(() => self.skipWaiting())
-                );
-            });
-            self.addEventListener('activate', e => {
-                e.waitUntil(self.clients.claim());
-            });
-            self.addEventListener('fetch', e => {
-                e.respondWith(
-                    caches.match(e.request).then(res => res || fetch(e.request))
-                );
-            });
-        `;
-        const dataUrl = 'data:text/javascript;base64,' + btoa(unescape(encodeURIComponent(swCode)));
-        navigator.serviceWorker.register(dataUrl)
-            .then(reg => console.log('SW instalado!', reg))
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('SW registrado!', reg))
             .catch(err => console.log('Erro SW:', err));
     }
 
-    // --- CONFIGURAÇÃO GOOGLE DRIVE ---
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9ADQzgT1wXZxAvSaSxc2lDkQpjWg8wn5VKzdQc_cGSLpbngqVQ2A36e-jS462U4DG/exec";
-    // ---------------------------------
 
-    // --- INICIALIZAÇÃO INDEXEDDB ---
     let dbInstance = null;
     let memory = { users:[], refs:{}, missions:[] };
     let bufferOK = [];
@@ -254,19 +216,12 @@
     function initIndexedDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open("TrigoDB", 1);
-            
             request.onerror = (e) => reject("Erro ao abrir IndexedDB");
-            
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
-                if (!db.objectStoreNames.contains("historico")) {
-                    db.createObjectStore("historico", { keyPath: "dm" });
-                }
-                if (!db.objectStoreNames.contains("app_state")) {
-                    db.createObjectStore("app_state");
-                }
+                if (!db.objectStoreNames.contains("historico")) db.createObjectStore("historico", { keyPath: "dm" });
+                if (!db.objectStoreNames.contains("app_state")) db.createObjectStore("app_state");
             };
-
             request.onsuccess = async (e) => {
                 dbInstance = e.target.result;
                 await loadStateFromDB();
@@ -278,8 +233,7 @@
     function getFromDB(storeName, key) {
         return new Promise((resolve) => {
             const transaction = dbInstance.transaction([storeName], "readonly");
-            const store = transaction.objectStore(storeName);
-            const request = store.get(key);
+            const request = transaction.objectStore(storeName).get(key);
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => resolve(null);
         });
@@ -288,8 +242,7 @@
     function getAllFromDB(storeName) {
         return new Promise((resolve) => {
             const transaction = dbInstance.transaction([storeName], "readonly");
-            const store = transaction.objectStore(storeName);
-            const request = store.getAll();
+            const request = transaction.objectStore(storeName).getAll();
             request.onsuccess = () => resolve(request.result || []);
             request.onerror = () => resolve([]);
         });
@@ -298,29 +251,24 @@
     function saveToDB(storeName, key, value) {
         return new Promise((resolve) => {
             const transaction = dbInstance.transaction([storeName], "readwrite");
-            const store = transaction.objectStore(storeName);
-            const request = store.put(value, key);
-            request.onsuccess = () => resolve(true);
-            request.onerror = () => resolve(false);
+            transaction.objectStore(storeName).put(value, key);
+            transaction.oncomplete = () => resolve(true);
         });
     }
 
     function savePieceToHist(item) {
         return new Promise((resolve) => {
             const transaction = dbInstance.transaction(["historico"], "readwrite");
-            const store = transaction.objectStore("historico");
-            const request = store.put(item);
-            request.onsuccess = () => resolve(true);
-            request.onerror = () => resolve(false);
+            transaction.objectStore("historico").put(item);
+            transaction.oncomplete = () => resolve(true);
         });
     }
 
     function clearStore(storeName) {
         return new Promise((resolve) => {
             const transaction = dbInstance.transaction([storeName], "readwrite");
-            const store = transaction.objectStore(storeName);
-            const request = store.clear();
-            request.onsuccess = () => resolve(true);
+            transaction.objectStore(storeName).clear();
+            transaction.oncomplete = () => resolve(true);
         });
     }
 
@@ -331,14 +279,8 @@
         bufferNOK = savedBuffers.nok || [];
     }
 
-    async function saveBuffers() { 
-        await saveToDB("app_state", "buffers", { ok: bufferOK, nok: bufferNOK }); 
-    }
-
-    async function saveMemory() {
-        await saveToDB("app_state", "memory", memory);
-    }
-    // ---------------------------------
+    async function saveBuffers() { await saveToDB("app_state", "buffers", { ok: bufferOK, nok: bufferNOK }); }
+    async function saveMemory() { await saveToDB("app_state", "memory", memory); }
 
     function updateClock() {
         const now = new Date();
@@ -364,22 +306,12 @@
     }
 
     async function sendToGoogleDrive(payloadData) {
-        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("COLE_AQUI")) {
-            console.warn("URL do Google Script não configurado.");
-            return false;
-        }
-
+        if (!GOOGLE_SCRIPT_URL) return false;
         const CHUNK_SIZE = 50; 
-        const totalItems = payloadData.length;
-        const totalChunks = Math.ceil(totalItems / CHUNK_SIZE);
-
+        const totalChunks = Math.ceil(payloadData.length / CHUNK_SIZE);
         for (let i = 0; i < totalChunks; i++) {
-            const start = i * CHUNK_SIZE;
-            const end = start + CHUNK_SIZE;
-            const chunk = payloadData.slice(start, end);
-
-            showPopup(`Nuvem: A sincronizar lote ${i + 1} de ${totalChunks}...`, "info");
-
+            const chunk = payloadData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+            showPopup(`Sincronizando lote ${i + 1} de ${totalChunks}...`, "info");
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: "POST",
@@ -387,50 +319,37 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(chunk)
                 });
-                
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-            } catch (error) {
-                console.error(`Erro no lote ${i + 1}:`, error);
-                showPopup(`Falha no lote ${i + 1}. Operação cancelada!`, "error");
-                return false; 
-            }
+                await new Promise(r => setTimeout(r, 300));
+            } catch (error) { showPopup(`Erro no lote ${i + 1}`, "error"); return false; }
         }
         return true;
     }
 
     async function exportToGoogleDriveManual() {
         const dbList = await getAllFromDB("historico");
-        if (dbList.length === 0) {
-            showPopup("Não existem dados no Histórico para exportar!", "error");
-            return;
-        }
-        
-        if (confirm(`Deseja exportar todos os ${dbList.length} registos do Histórico para o Google Drive de forma segura (em lotes)?`)) {
+        if (dbList.length === 0) { showPopup("Vazio", "error"); return; }
+        if (confirm("Exportar tudo?")) {
             const sucesso = await sendToGoogleDrive(dbList);
-            if (sucesso) {
-                showPopup("Todo o Histórico foi sincronizado com sucesso!", "success");
-            }
+            if (sucesso) showPopup("Sucesso!");
         }
     }
 
     function updateUI() {
-        const qVal = document.getElementById('quantidade').value;
-        const qNum = parseInt(qVal) || 0;
+        const qNum = parseInt(document.getElementById('quantidade').value) || 0;
         const pOK = qNum > 0 ? Math.round((bufferOK.length / qNum) * 100) : 0;
         const pNOK = qNum > 0 ? Math.round((bufferNOK.length / qNum) * 100) : 0;
-        document.getElementById('ui-ok').innerText = `${bufferOK.length} / ${qVal || '-'}`;
-        document.getElementById('ui-nok').innerText = `${bufferNOK.length} / ${qVal || '-'}`;
+        document.getElementById('ui-ok').innerText = `${bufferOK.length} / ${qNum || '-'}`;
+        document.getElementById('ui-nok').innerText = `${bufferNOK.length} / ${qNum || '-'}`;
         document.getElementById('perc-ok').innerText = `${pOK}%`;
         document.getElementById('perc-nok').innerText = `${pNOK}%`;
         document.getElementById('bar-ok').style.width = Math.min(pOK, 100) + "%";
         document.getElementById('bar-nok').style.width = Math.min(pNOK, 100) + "%";
-        document.getElementById('ok-list').innerHTML = bufferOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">${i.dm} <small>(${i.status}) - ${i.hora || ''}</small></div>`).reverse().join('');
-        document.getElementById('nok-list').innerHTML = bufferNOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">${i.dm} <small>- ${i.hora || ''}</small></div>`).reverse().join('');
+        document.getElementById('ok-list').innerHTML = bufferOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('OK', ${idx})">${i.dm}</div>`).join('');
+        document.getElementById('nok-list').innerHTML = bufferNOK.map((i, idx) => `<div class="buffer-item" onclick="removeFromBuffer('NOK', ${idx})">${i.dm}</div>`).join('');
     }
 
     async function removeFromBuffer(type, idx) {
-        if(confirm("Remover esta peça?")) {
+        if(confirm("Remover?")) {
             if(type === 'OK') bufferOK.splice(idx, 1); else bufferNOK.splice(idx, 1);
             await saveBuffers(); updateUI();
         }
@@ -438,13 +357,9 @@
 
     function handleScan(e) {
         if (e.key === 'Enter') {
-            const dm = e.target.value.trim().toUpperCase(); 
-            e.target.value = "";
+            const dm = e.target.value.trim().toUpperCase(); e.target.value = "";
             if(!dm) return;
-            if (bufferOK.some(i => i.dm === dm) || bufferNOK.some(i => i.dm === dm)) { showPopup("Já existe no buffer atual!", "error"); return; }
-            if(!document.getElementById('referencia').value || !document.getElementById('quantidade').value || !document.getElementById('inspetor').value) {
-                showPopup("Falta Inspetor, Ref ou QTD!", "error"); return;
-            }
+            if(!document.getElementById('referencia').value || !document.getElementById('quantidade').value) { showPopup("Falta Ref ou QTD", "error"); return; }
             tempDM = dm;
             document.getElementById('dm-display').innerText = dm;
             document.getElementById('modal-status').style.display = 'flex';
@@ -452,30 +367,23 @@
     }
 
     async function applyStatus(status) {
-        const agora = new Date();
-        const dataHoraRegisto = agora.toLocaleDateString('pt-PT') + ' ' + agora.toLocaleTimeString('pt-PT');
-
         const item = {
             insp: document.getElementById('inspetor').value.trim(),
             ref: document.getElementById('referencia').value.toUpperCase().trim(),
             missao: document.getElementById('missao').value.trim(),
             dm: tempDM, 
             status: status,
-            hora: dataHoraRegisto
+            hora: new Date().toLocaleString('pt-PT')
         };
         if(item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
         if(item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
         memory.refs[item.ref] = document.getElementById('quantidade').value;
-        
-        await saveMemory();
-        updateDatalists();
+        await saveMemory(); updateDatalists();
         document.getElementById('modal-status').style.display = 'none';
         if(status === 'OK' || status === 'RETRABALHADA') bufferOK.push(item); else bufferNOK.push(item);
-        
         const targetQty = parseInt(document.getElementById('quantidade').value);
         if(bufferOK.length >= targetQty) { currentLoteType = "OK"; openFechoModal(); }
         else if(bufferNOK.length >= targetQty) { currentLoteType = "NOK"; openFechoModal(); }
-        
         await saveBuffers(); updateUI(); focusDM();
     }
 
@@ -483,35 +391,21 @@
         document.getElementById('fecho-titulo').innerText = `FECHAR LOTE ${currentLoteType}`;
         document.getElementById('data-fecho-lote').valueAsDate = new Date();
         document.getElementById('modal-fecho').style.display = 'flex';
-        setTimeout(() => document.getElementById('etiq-final').focus(), 300);
     }
 
     async function confirmFinishLote() {
         const etiq = document.getElementById('etiq-final').value.trim();
         const data = document.getElementById('data-fecho-lote').value;
-        if(!etiq || !data) { showPopup("Faltam dados!", "error"); return; }
-        
         const lote = (currentLoteType === "OK") ? bufferOK : bufferNOK;
-        
-        for (let i of lote) {
-            i.etiqueta = etiq; 
-            i.data_producao = data; 
-            await savePieceToHist(i);
-        }
-
+        for (let i of lote) { i.etiqueta = etiq; i.data_producao = data; await savePieceToHist(i); }
         await sendToGoogleDrive(lote);
-
         if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
-        await saveBuffers(); 
-        document.getElementById('modal-fecho').style.display = 'none';
-        document.getElementById('etiq-final').value = ""; 
-        updateUI(); 
-        showPopup("Lote Finalizado e Processado!"); 
-        focusDM();
+        await saveBuffers(); document.getElementById('modal-fecho').style.display = 'none';
+        updateUI(); showPopup("Lote Finalizado!"); focusDM();
     }
 
-    function closeModalFecho() { document.getElementById('modal-fecho').style.display = 'none'; focusDM(); }
-    function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; focusDM(); }
+    function closeModalFecho() { document.getElementById('modal-fecho').style.display = 'none'; }
+    function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; }
     function forceFinish(type) { if((type === 'OK' ? bufferOK : bufferNOK).length > 0) { currentLoteType = type; openFechoModal(); } }
     function focusDM() { document.getElementById('input-dm').focus(); }
     function autoQty(val) { focusDM(); }
@@ -523,81 +417,33 @@
     }
 
     async function renderHist() {
-        const fi = document.getElementById('f-insp').value;
-        const fr = document.getElementById('f-ref').value;
-        const fs = document.getElementById('f-status').value;
-        const fdm = document.getElementById('f-dm-search').value.trim().toUpperCase();
-        
         const dbList = await getAllFromDB("historico");
-        const filtered = dbList.filter(p => (fi==="" || p.insp===fi) && (fr==="" || p.ref===fr) && (fs==="" || p.status===fs) && (fdm==="" || p.dm.includes(fdm)));
-        
-        document.getElementById('hist-counter').innerText = `Registos: ${filtered.length}`;
-
-        document.getElementById('tbody-hist').innerHTML = filtered.slice().reverse().map(p => {
-            let statusClass = '';
-            if (p.status === 'OK') statusClass = 'status-ok';
-            else if (p.status === 'RETRABALHADA') statusClass = 'status-retrabalhada';
-            else if (p.status === 'NOK') statusClass = 'status-nok';
-
-            return `<tr>
-                <td>${p.hora || ''}</td>
-                <td>${p.data_producao || ''}</td>
-                <td>${p.insp || ''}</td>
-                <td>${p.ref || ''}</td>
-                <td>${p.missao || ''}</td>
-                <td>${p.dm || ''}</td>
-                <td>${p.etiqueta || ''}</td>
-                <td><span class="status-badge ${statusClass}">${p.status || ''}</span></td>
-            </tr>`;
-        }).join('');
+        document.getElementById('tbody-hist').innerHTML = dbList.slice().reverse().map(p => `<tr>
+            <td>${p.hora}</td><td>${p.data_producao || ''}</td><td>${p.insp}</td><td>${p.ref}</td>
+            <td>${p.missao}</td><td>${p.dm}</td><td>${p.etiqueta || ''}</td>
+            <td><span class="status-badge status-${p.status.toLowerCase()}">${p.status}</span></td>
+        </tr>`).join('');
     }
 
     async function updateFilterOptions() {
         const dbList = await getAllFromDB("historico");
         const insps = [...new Set(dbList.map(i => i.insp).filter(Boolean))];
-        const refs = [...new Set(dbList.map(i => i.ref).filter(Boolean))];
         document.getElementById('f-insp').innerHTML = '<option value="">Todos</option>' + insps.map(i => `<option value="${i}">${i}</option>`).join('');
-        document.getElementById('f-ref').innerHTML = '<option value="">Todas</option>' + refs.map(r => `<option value="${r}">${r}</option>`).join('');
     }
 
     async function exportExcel() {
         const dbList = await getAllFromDB("historico");
-        
-        const formattedList = dbList.map(item => ({
-            "Data/Hora Registo": item.hora || "",
-            "Data Production": item.data_producao || "",
-            "Inspetor": item.insp || "",
-            "Referência": item.ref || "",
-            "Missão": item.missao || "",
-            "Data Matrix": item.dm || "",
-            "Etiqueta": item.etiqueta || "",
-            "Status": item.status || ""
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(formattedList);
+        const ws = XLSX.utils.json_to_sheet(dbList);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Dados");
         XLSX.writeFile(wb, "Traca_Export.xlsx");
     }
 
     async function clearHistorySecure() { 
-        if(confirm("Limpar tudo localmente?") && prompt("Digite APAGAR") === "APAGAR") { 
-            await clearStore("historico");
-            await renderHist(); 
-        } 
+        if(confirm("Limpar?") && prompt("Digite APAGAR") === "APAGAR") { await clearStore("historico"); await renderHist(); } 
     }
 
-    window.onload = async () => { 
-        updateClock(); 
-        try {
-            await initIndexedDB();
-            updateDatalists(); 
-            updateUI(); 
-            focusDM(); 
-        } catch(e) {
-            showPopup("Erro ao iniciar base de dados interna!", "error");
-        }
-    };
+    window.onload = async () => { await initIndexedDB(); updateDatalists(); updateUI(); focusDM(); };
 </script>
 </body>
 </html>
