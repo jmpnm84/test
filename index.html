@@ -8,19 +8,34 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>TRIGO - Rastreabilidade Peças PTCNT</title>
     
-    <link rel="manifest" href="manifest.json">
+    <!-- Bloco Firebase: Inicialização -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCtMutFvXt8BNCxjvs-ydWBAOgIA2ftv0g",
+            authDomain: "traceability-a27bf.firebaseapp.com",
+            projectId: "traceability-a27bf",
+            storageBucket: "traceability-a27bf.firebasestorage.app",
+            messagingSenderId: "794409891428",
+            appId: "1:794409891428:web:275948ebd8789182d49171",
+            measurementId: "G-GF88RBMM5M"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.collection = collection;
+        window.addDoc = addDoc;
+    </script>
     
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
         :root { 
-            --p: #005596; 
-            --p-dark: #0e4c85; 
-            --ok: #27ae60; 
-            --nok: #c0392b; 
-            --ret: #f39c12; 
-            --bg: #f4f7f6;
-            --trigo-green: #97d700;
+            --p: #005596; --p-dark: #0e4c85; --ok: #27ae60; --nok: #c0392b; 
+            --ret: #f39c12; --bg: #f4f7f6; --trigo-green: #97d700;
         }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 5px; color: #333; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -46,7 +61,7 @@
         .perc-badge { position: absolute; top: 5px; right: 8px; font-size: 9px; background: rgba(0,0,0,0.2); padding: 2px 5px; border-radius: 10px; }
         .progress-box { width: 100%; height: 5px; background: rgba(0,0,0,0.15); border-radius: 3px; margin-top: 6px; overflow: hidden; }
         .progress-bar { height: 100%; background: #fff; width: 0%; transition: width 0.3s ease; }
-        .scan-area { background: #2c3e50; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 10px; }
+        .scan-area { background: #2c3e50; color: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
         #input-dm { width: 100%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); color: white; font-size: 14px; outline: none; }
         .buffer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .buffer-box { background: #fff; border-radius: 6px; height: 250px; display: flex; flex-direction: column; border: 1px solid #eee; overflow: hidden; }
@@ -142,7 +157,6 @@
             <span id="hist-counter">Registos: 0</span>
             <div style="display:flex; gap:5px; flex-wrap: wrap;">
                 <button onclick="exportExcel()" style="background:var(--ok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">📤 EXCEL</button>
-                <button onclick="exportToGoogleDriveManual()" style="background:#00a3ff; border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight: bold;">☁️ ENVIAR DRIVE</button>
                 <button onclick="clearHistorySecure()" style="background:var(--nok); border:none; color:white; padding:5px 10px; border-radius:4px; cursor:pointer;">LIMPAR</button>
             </div>
         </div>
@@ -199,20 +213,30 @@
 <datalist id="dl-missoes"></datalist>
 
 <script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('SW registrado!', reg))
-            .catch(err => console.log('Erro SW:', err));
-    }
-
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9ADQzgT1wXZxAvSaSxc2lDkQpjWg8wn5VKzdQc_cGSLpbngqVQ2A36e-jS462U4DG/exec";
-
+    // Configurações e Variáveis
     let dbInstance = null;
     let memory = { users:[], refs:{}, missions:[] };
     let bufferOK = [];
     let bufferNOK = [];
     let tempDM = null, currentLoteType = "";
 
+    // Lógica Firebase (Adaptada para ser assíncrona)
+    async function sendToFirebase(lote) {
+        try {
+            const colRef = window.collection(window.db, "registos");
+            for (const item of lote) {
+                await window.addDoc(colRef, item);
+            }
+            showPopup("Dados sincronizados no Firebase!");
+            return true;
+        } catch (e) {
+            console.error(e);
+            showPopup("Erro ao enviar para Firebase", "error");
+            return false;
+        }
+    }
+
+    // Inicialização IndexedDB
     function initIndexedDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open("TrigoDB", 1);
@@ -305,33 +329,26 @@
         setTimeout(() => { toast.style.display = 'none'; }, 2500);
     }
 
-    async function sendToGoogleDrive(payloadData) {
-        if (!GOOGLE_SCRIPT_URL) return false;
-        const CHUNK_SIZE = 50; 
-        const totalChunks = Math.ceil(payloadData.length / CHUNK_SIZE);
-        for (let i = 0; i < totalChunks; i++) {
-            const chunk = payloadData.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-            showPopup(`Sincronizando lote ${i + 1} de ${totalChunks}...`, "info");
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(chunk)
-                });
-                await new Promise(r => setTimeout(r, 300));
-            } catch (error) { showPopup(`Erro no lote ${i + 1}`, "error"); return false; }
+    async function confirmFinishLote() {
+        const etiq = document.getElementById('etiq-final').value.trim();
+        const data = document.getElementById('data-fecho-lote').value;
+        const lote = (currentLoteType === "OK") ? bufferOK : bufferNOK;
+        
+        for (let i of lote) { 
+            i.etiqueta = etiq; 
+            i.data_producao = data; 
+            await savePieceToHist(i); 
         }
-        return true;
-    }
-
-    async function exportToGoogleDriveManual() {
-        const dbList = await getAllFromDB("historico");
-        if (dbList.length === 0) { showPopup("Vazio", "error"); return; }
-        if (confirm("Exportar tudo?")) {
-            const sucesso = await sendToGoogleDrive(dbList);
-            if (sucesso) showPopup("Sucesso!");
-        }
+        
+        // Chamada Firebase
+        await sendToFirebase(lote);
+        
+        if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
+        await saveBuffers(); 
+        document.getElementById('modal-fecho').style.display = 'none';
+        updateUI(); 
+        showPopup("Lote Finalizado!"); 
+        focusDM();
     }
 
     function updateUI() {
@@ -393,17 +410,6 @@
         document.getElementById('modal-fecho').style.display = 'flex';
     }
 
-    async function confirmFinishLote() {
-        const etiq = document.getElementById('etiq-final').value.trim();
-        const data = document.getElementById('data-fecho-lote').value;
-        const lote = (currentLoteType === "OK") ? bufferOK : bufferNOK;
-        for (let i of lote) { i.etiqueta = etiq; i.data_producao = data; await savePieceToHist(i); }
-        await sendToGoogleDrive(lote);
-        if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
-        await saveBuffers(); document.getElementById('modal-fecho').style.display = 'none';
-        updateUI(); showPopup("Lote Finalizado!"); focusDM();
-    }
-
     function closeModalFecho() { document.getElementById('modal-fecho').style.display = 'none'; }
     function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; }
     function forceFinish(type) { if((type === 'OK' ? bufferOK : bufferNOK).length > 0) { currentLoteType = type; openFechoModal(); } }
@@ -443,7 +449,15 @@
         if(confirm("Limpar?") && prompt("Digite APAGAR") === "APAGAR") { await clearStore("historico"); await renderHist(); } 
     }
 
-    window.onload = async () => { await initIndexedDB(); updateDatalists(); updateUI(); focusDM(); };
+    window.onload = async () => { 
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
+        }
+        await initIndexedDB(); 
+        updateDatalists(); 
+        updateUI(); 
+        focusDM(); 
+    };
 </script>
 </body>
 </html>
