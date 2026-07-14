@@ -46,43 +46,39 @@
         .perc-badge { position: absolute; top: 5px; right: 8px; font-size: 9px; background: rgba(0,0,0,0.2); padding: 2px 5px; border-radius: 10px; }
         .progress-box { width: 100%; height: 5px; background: rgba(0,0,0,0.15); border-radius: 3px; margin-top: 6px; overflow: hidden; }
         .progress-bar { height: 100%; background: #fff; width: 0%; transition: width 0.3s ease; }
-        .scan-area { background: #2c3e50; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 10px; }
+        
+        .scan-area { background: #2c3e50; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 10px; transition: background 0.3s; }
+        .scan-area.error { background: #c0392b; animation: shake 0.5s ease; }
+        
         #input-dm { width: 100%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); color: white; font-size: 14px; outline: none; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
         .buffer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .buffer-box { background: #fff; border-radius: 6px; height: 250px; display: flex; flex-direction: column; border: 1px solid #eee; overflow: hidden; }
         .buffer-header { color: white; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 10px; min-height: 50px; }
         .btn-mini-finish { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: white; padding: 0 12px; border-radius: 4px; cursor: pointer; height: 44px; min-width: 70px; }
-        .btn-mini-finish:hover { background: rgba(255,255,255,0.3); }
         .filter-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 10px; }
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:1000; }
         .modal-content { background:white; padding:15px; border-radius:10px; text-align:center; width:95%; max-width:320px; }
         .btn-decision { padding: 12px; font-size: 0.9em; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: white; margin-bottom: 6px; width: 100%; }
-        #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 20px; color: white; z-index: 9999; display: none; font-size: 12px; }
+        #custom-toast { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 15px 30px; border-radius: 50px; color: white; z-index: 9999; display: none; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; }
         .buffer-item { cursor: pointer; padding: 4px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; }
         .buffer-item:hover { background: #fff5f5; color: var(--nok); }
         .status-badge { font-weight: bold; text-align: center; border-radius: 4px; padding: 3px 6px; display: inline-block; color: white; min-width: 90px; }
         .status-ok { background-color: var(--ok); }
         .status-retrabalhada { background-color: var(--ret); }
         .status-nok { background-color: var(--nok); }
-        
         .accordion-container { margin-top: 10px; }
-        .accordion-group { margin-bottom: 12px; border: 1px solid #dcdcdc; border-radius: 8px; overflow: hidden; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .accordion-header { background: #f8f9fa; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 13px; color: var(--p-dark); border-bottom: 1px solid #eee; transition: all 0.2s ease; }
-        .accordion-header:hover { background: #f0f4f8; }
-        .accordion-header.active { background: var(--p); color: white; border-bottom-color: transparent; }
-        .accordion-toggle { font-size: 12px; transition: transform 0.3s; }
-        .accordion-header.active .accordion-toggle { transform: rotate(180deg); color: white; }
-        .accordion-content { display: none; padding: 10px; background: #fff; }
-        .accordion-content.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .accordion-table { width: 100%; border-collapse: collapse; font-size: 10px; }
-        .accordion-table th { background: #f4f4f4; padding: 8px; text-align: left; color: #555; border-bottom: 1px solid #ddd; }
-        .accordion-table td { padding: 8px; border-bottom: 1px solid #f0f0f0; color: #444; }
-        .accordion-table tr:hover { background: #fafafa; }
-        .etiq-badge { background: #e0e0e0; color: #333; padding: 3px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #ccc; }
-        .accordion-header.active .etiq-badge { background: white; color: var(--p); }
-        
-        /* Paginação */
+        .accordion-group { margin-bottom: 12px; border: 1px solid #dcdcdc; border-radius: 8px; overflow: hidden; background: white; }
+        .accordion-header { background: #f8f9fa; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 13px; color: var(--p-dark); border-bottom: 1px solid #eee; }
+        .accordion-header.active { background: var(--p); color: white; }
+        .accordion-content { display: none; padding: 10px; }
+        .accordion-content.active { display: block; }
         .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; padding: 10px; color: white; }
         .btn-page { background: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
@@ -103,17 +99,14 @@
         </div>
         <div class="logo-container">
             <img src="https://github.com/user-attachments/assets/e4e16378-571e-444d-94ef-916a51a81675" alt="TRIGO Logo" class="logo-img">
-            <span class="version-text">v3.4.1</span>
+            <span class="version-text">v3.5.2</span>
         </div>
     </header>
 
     <section id="view-registo">
         <div class="header-section">
             <div class="inputs-row">
-                <div>
-                    <label>Inspetor</label>
-                    <input type="text" id="inspetor" list="dl-inspetores">
-                </div>
+                <div><label>Inspetor</label><input type="text" id="inspetor" list="dl-inspetores"></div>
                 <div><label>Referência</label><input type="text" id="referencia" list="dl-refs" onchange="autoQty(this.value)"></div>
                 <div><label>Missão</label><input type="text" id="missao" list="dl-missoes"></div>
                 <div><label>QTD</label><input type="number" id="quantidade" min="1" onchange="updateUI()"></div>
@@ -135,7 +128,7 @@
             </div>
         </div>
 
-        <div class="scan-area">
+        <div class="scan-area" id="scan-box">
             <h3 style="margin:0 0 5px 0; font-size:12px;">DATA MATRIX</h3>
             <input type="text" id="input-dm" placeholder="Aguardando leitura..." onkeypress="handleScan(event)">
         </div>
@@ -206,144 +199,96 @@
 
 <script>
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('SW instalado!', reg))
-            .catch(err => console.log('Erro SW:', err));
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error', err));
     }
 
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9ADQzgT1wXZxAvSaSxc2lDkQpjWg8wn5VKzdQc_cGSLpbngqVQ2A36e-jS462U4DG/exec";
-    let dbInstance = null;
-    let memory = { users:[], refs:{}, missions:[] };
-    let bufferOK = [];
-    let bufferNOK = [];
-    let tempDM = null, currentLoteType = "";
-    
-    // Paginação
-    let currentPage = 1;
+    let dbInstance = null, memory = { users:[], refs:{}, missions:[] }, bufferOK = [], bufferNOK = [], tempDM = null, currentLoteType = "", currentPage = 1;
     const itemsPerPage = 10;
 
     function initIndexedDB() {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const request = indexedDB.open("TrigoDB", 1);
-            request.onerror = (e) => reject("Erro ao abrir IndexedDB");
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains("historico")) db.createObjectStore("historico", { keyPath: "dm" });
                 if (!db.objectStoreNames.contains("app_state")) db.createObjectStore("app_state");
             };
-            request.onsuccess = async (e) => {
-                dbInstance = e.target.result;
-                await loadStateFromDB();
-                resolve();
-            };
-        });
-    }
-
-    function getFromDB(storeName, key) {
-        return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readonly");
-            const store = transaction.objectStore(storeName);
-            const request = store.get(key);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => resolve(null);
-        });
-    }
-
-    function getAllFromDB(storeName) {
-        return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readonly");
-            const store = transaction.objectStore(storeName);
-            const request = store.getAll();
-            request.onsuccess = () => resolve(request.result || []);
-            request.onerror = () => resolve([]);
-        });
-    }
-
-    function saveToDB(storeName, key, value) {
-        return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readwrite");
-            const store = transaction.objectStore(storeName);
-            const request = store.put(value, key);
-            request.onsuccess = () => resolve(true);
-            request.onerror = () => resolve(false);
-        });
-    }
-
-    function savePieceToHist(item) {
-        return new Promise((resolve) => {
-            const transaction = dbInstance.transaction(["historico"], "readwrite");
-            const store = transaction.objectStore("historico");
-            const request = store.put(item);
-            request.onsuccess = () => resolve(true);
-            request.onerror = () => resolve(false);
-        });
-    }
-
-    function clearStore(storeName) {
-        return new Promise((resolve) => {
-            const transaction = dbInstance.transaction([storeName], "readwrite");
-            const store = transaction.objectStore(storeName);
-            const request = store.clear();
-            request.onsuccess = () => resolve(true);
+            request.onsuccess = async (e) => { dbInstance = e.target.result; await loadStateFromDB(); resolve(); };
         });
     }
 
     async function loadStateFromDB() {
-        memory = await getFromDB("app_state", "memory") || { users:[], refs:{}, missions:[] };
-        const savedBuffers = await getFromDB("app_state", "buffers") || { ok: [], nok: [] };
-        bufferOK = savedBuffers.ok || [];
-        bufferNOK = savedBuffers.nok || [];
+        const transaction = dbInstance.transaction(["app_state"], "readonly");
+        const store = transaction.objectStore("app_state");
+        const memReq = store.get("memory");
+        const bufReq = store.get("buffers");
+        memReq.onsuccess = () => { if(memReq.result) memory = memReq.result; };
+        bufReq.onsuccess = () => { if(bufReq.result) { bufferOK = bufReq.result.ok || []; bufferNOK = bufReq.result.nok || []; } };
     }
 
-    async function saveBuffers() { await saveToDB("app_state", "buffers", { ok: bufferOK, nok: bufferNOK }); }
-    async function saveMemory() { await saveToDB("app_state", "memory", memory); }
-
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('live-date').innerText = now.toLocaleDateString('pt-PT');
-        document.getElementById('live-time').innerText = now.toLocaleTimeString('pt-PT');
+    async function saveBuffers() { 
+        const transaction = dbInstance.transaction(["app_state"], "readwrite");
+        transaction.objectStore("app_state").put({ ok: bufferOK, nok: bufferNOK }, "buffers"); 
     }
-    setInterval(updateClock, 1000);
 
-    async function switchTab(t) {
-        document.getElementById('view-registo').style.display = t === 'registo' ? 'block' : 'none';
-        document.getElementById('view-historico').style.display = t === 'historico' ? 'block' : 'none';
-        document.getElementById('btn-reg').classList.toggle('active', t === 'registo');
-        document.getElementById('btn-hist').classList.toggle('active', t === 'historico');
-        if(t === 'historico') { await updateFilterOptions(); await renderHist(); } else { focusDM(); }
+    async function saveMemory() { 
+        const transaction = dbInstance.transaction(["app_state"], "readwrite");
+        transaction.objectStore("app_state").put(memory, "memory"); 
     }
 
     function showPopup(msg, type = 'success') {
         const toast = document.getElementById('custom-toast');
         toast.innerText = msg;
-        toast.style.background = type === 'success' ? 'var(--ok)' : (type === 'error' ? 'var(--nok)' : 'var(--p)');
+        toast.style.background = type === 'error' ? 'var(--nok)' : 'var(--p)';
         toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 2500);
-    }
-
-    async function sendToGoogleDrive(payloadData) {
-        if (!GOOGLE_SCRIPT_URL) return false;
-        const CHUNK_SIZE = 50; 
-        const totalChunks = Math.ceil(payloadData.length / CHUNK_SIZE);
-        for (let i = 0; i < totalChunks; i++) {
-            const chunk = payloadData.slice(i * CHUNK_SIZE, (i+1) * CHUNK_SIZE);
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(chunk) });
-                await new Promise(resolve => setTimeout(resolve, 300));
-            } catch (error) { return false; }
+        
+        if (type === 'error') {
+            const scanBox = document.getElementById('scan-box');
+            scanBox.classList.add('error');
+            setTimeout(() => scanBox.classList.remove('error'), 500);
         }
-        return true;
+
+        setTimeout(() => { toast.style.display = 'none'; }, 2000);
     }
 
-    async function exportToGoogleDriveManual() {
-        const dbList = await getAllFromDB("historico");
-        if (dbList.length === 0) { showPopup("Vazio!", "error"); return; }
-        if (confirm(`Exportar ${dbList.length} registos?`)) {
-            const sucesso = await sendToGoogleDrive(dbList);
-            if (sucesso) showPopup("Sincronizado!");
+    function handleScan(e) {
+        if (e.key === 'Enter') {
+            const dm = e.target.value.trim().toUpperCase(); 
+            e.target.value = "";
+            if(!dm) return;
+            if (bufferOK.some(i => i.dm === dm) || bufferNOK.some(i => i.dm === dm)) {
+                showPopup("⚠️ DUPLICADO: " + dm, "error");
+                return;
+            }
+            tempDM = dm;
+            document.getElementById('dm-display').innerText = dm;
+            document.getElementById('modal-status').style.display = 'flex';
         }
     }
 
+    async function applyStatus(status) {
+        const agora = new Date();
+        const item = {
+            insp: document.getElementById('inspetor').value.trim(),
+            ref: document.getElementById('referencia').value.toUpperCase().trim(),
+            missao: document.getElementById('missao').value.trim(),
+            dm: tempDM, status: status,
+            hora: agora.toLocaleDateString('pt-PT') + ' ' + agora.toLocaleTimeString('pt-PT')
+        };
+        if(item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
+        if(item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
+        memory.refs[item.ref] = document.getElementById('quantidade').value;
+        await saveMemory(); updateDatalists();
+        document.getElementById('modal-status').style.display = 'none';
+        if(status === 'OK' || status === 'RETRABALHADA') bufferOK.push(item); else bufferNOK.push(item);
+        const targetQty = parseInt(document.getElementById('quantidade').value);
+        if(bufferOK.length >= targetQty && targetQty > 0) { currentLoteType = "OK"; openFechoModal(); }
+        else if(bufferNOK.length >= targetQty && targetQty > 0) { currentLoteType = "NOK"; openFechoModal(); }
+        await saveBuffers(); updateUI(); focusDM();
+    }
+
+    // --- Funções Auxiliares mantidas ---
     function updateUI() {
         const qVal = document.getElementById('quantidade').value;
         const qNum = parseInt(qVal) || 0;
@@ -360,51 +305,45 @@
     }
 
     async function removeFromBuffer(type, idx) {
-        if(confirm("Remover?")) {
+        if(confirm("Remover da fila?")) {
             if(type === 'OK') bufferOK.splice(idx, 1); else bufferNOK.splice(idx, 1);
             await saveBuffers(); updateUI();
         }
     }
 
-    function handleScan(e) {
-        if (e.key === 'Enter') {
-            const dm = e.target.value.trim().toUpperCase(); 
-            e.target.value = "";
-            if(!dm) return;
-            if (bufferOK.some(i => i.dm === dm) || bufferNOK.some(i => i.dm === dm)) { showPopup("Já existe!", "error"); return; }
-            tempDM = dm;
-            document.getElementById('dm-display').innerText = dm;
-            document.getElementById('modal-status').style.display = 'flex';
-        }
+    function switchTab(t) {
+        document.getElementById('view-registo').style.display = t === 'registo' ? 'block' : 'none';
+        document.getElementById('view-historico').style.display = t === 'historico' ? 'block' : 'none';
+        document.getElementById('btn-reg').classList.toggle('active', t === 'registo');
+        document.getElementById('btn-hist').classList.toggle('active', t === 'historico');
+        if(t === 'historico') renderHist(); else focusDM();
     }
 
-    async function applyStatus(status) {
-        const agora = new Date();
-        const item = {
-            insp: document.getElementById('inspetor').value.trim(),
-            ref: document.getElementById('referencia').value.toUpperCase().trim(),
-            missao: document.getElementById('missao').value.trim(),
-            dm: tempDM, 
-            status: status,
-            hora: agora.toLocaleDateString('pt-PT') + ' ' + agora.toLocaleTimeString('pt-PT')
-        };
-        if(item.insp && !memory.users.includes(item.insp)) memory.users.push(item.insp);
-        if(item.missao && !memory.missions.includes(item.missao)) memory.missions.push(item.missao);
-        memory.refs[item.ref] = document.getElementById('quantidade').value;
-        await saveMemory(); updateDatalists();
-        document.getElementById('modal-status').style.display = 'none';
-        if(status === 'OK' || status === 'RETRABALHADA') bufferOK.push(item); else bufferNOK.push(item);
-        const targetQty = parseInt(document.getElementById('quantidade').value);
-        if(bufferOK.length >= targetQty) { currentLoteType = "OK"; openFechoModal(); }
-        else if(bufferNOK.length >= targetQty) { currentLoteType = "NOK"; openFechoModal(); }
-        await saveBuffers(); updateUI(); focusDM();
+    function focusDM() { document.getElementById('input-dm').focus(); }
+    function autoQty() { focusDM(); }
+    function updateDatalists() {
+        document.getElementById('dl-inspetores').innerHTML = memory.users.map(u => `<option value="${u}">`).join('');
+        document.getElementById('dl-refs').innerHTML = Object.keys(memory.refs).map(r => `<option value="${r}">`).join('');
+        document.getElementById('dl-missoes').innerHTML = memory.missions.map(m => `<option value="${m}">`).join('');
     }
 
-    function openFechoModal() {
-        document.getElementById('fecho-titulo').innerText = `FECHAR LOTE ${currentLoteType}`;
-        document.getElementById('data-fecho-lote').valueAsDate = new Date();
-        document.getElementById('modal-fecho').style.display = 'flex';
-        setTimeout(() => document.getElementById('etiq-final').focus(), 300);
+    async function getAllFromDB(storeName) {
+        return new Promise((resolve) => {
+            const req = dbInstance.transaction([storeName], "readonly").objectStore(storeName).getAll();
+            req.onsuccess = () => resolve(req.result || []);
+        });
+    }
+
+    async function savePieceToHist(item) {
+        const transaction = dbInstance.transaction(["historico"], "readwrite");
+        transaction.objectStore("historico").put(item);
+    }
+
+    async function sendToGoogleDrive(payloadData) {
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payloadData) });
+            return true;
+        } catch (e) { return false; }
     }
 
     async function confirmFinishLote() {
@@ -414,135 +353,86 @@
         for (let i of lote) { i.etiqueta = etiq; i.data_producao = data; await savePieceToHist(i); }
         await sendToGoogleDrive(lote);
         if(currentLoteType === "OK") bufferOK = []; else bufferNOK = [];
-        await saveBuffers(); 
-        document.getElementById('modal-fecho').style.display = 'none';
-        updateUI(); showPopup("Finalizado!"); focusDM();
+        await saveBuffers(); document.getElementById('modal-fecho').style.display = 'none';
+        updateUI(); showPopup("Lote Finalizado!"); focusDM();
     }
 
-    function closeModalFecho() { document.getElementById('modal-fecho').style.display = 'none'; focusDM(); }
+    function openFechoModal() {
+        document.getElementById('fecho-titulo').innerText = `FECHAR LOTE ${currentLoteType}`;
+        document.getElementById('data-fecho-lote').valueAsDate = new Date();
+        document.getElementById('modal-fecho').style.display = 'flex';
+    }
+
+    function closeModalFecho() { document.getElementById('modal-fecho').style.display = 'none'; }
     function closeModalStatus() { document.getElementById('modal-status').style.display = 'none'; focusDM(); }
     function forceFinish(type) { if((type === 'OK' ? bufferOK : bufferNOK).length > 0) { currentLoteType = type; openFechoModal(); } }
-    function focusDM() { document.getElementById('input-dm').focus(); }
-    function autoQty(val) { focusDM(); }
-
-    function updateDatalists() {
-        document.getElementById('dl-inspetores').innerHTML = memory.users.map(u => `<option value="${u}">`).join('');
-        document.getElementById('dl-refs').innerHTML = Object.keys(memory.refs).map(r => `<option value="${r}">`).join('');
-        document.getElementById('dl-missoes').innerHTML = memory.missions.map(m => `<option value="${m}">`).join('');
-    }
-
+    
     function toggleAccordion(element) {
-        const isActive = element.classList.contains('active');
-        document.querySelectorAll('.accordion-header').forEach(h => {
-            h.classList.remove('active');
-            h.nextElementSibling.classList.remove('active');
-        });
-        if (!isActive) {
-            element.classList.add('active');
-            element.nextElementSibling.classList.add('active');
-        }
+        element.classList.toggle('active');
+        element.nextElementSibling.classList.toggle('active');
     }
 
     async function renderHist() {
-        const fi = document.getElementById('f-insp').value;
-        const fr = document.getElementById('f-ref').value;
-        const fs = document.getElementById('f-status').value;
-        const fdm = document.getElementById('f-dm-search').value.trim().toUpperCase();
         const dbList = await getAllFromDB("historico");
-        const filtered = dbList.filter(p => (fi==="" || p.insp===fi) && (fr==="" || p.ref===fr) && (fs==="" || p.status===fs) && (fdm==="" || p.dm.includes(fdm)));
-        
+        const filtered = dbList.filter(p => (document.getElementById('f-insp').value === "" || p.insp === document.getElementById('f-insp').value) && (document.getElementById('f-ref').value === "" || p.ref === document.getElementById('f-ref').value));
         const grouped = {};
         filtered.forEach(item => {
             const etiq = item.etiqueta || 'SEM ETIQUETA';
             if(!grouped[etiq]) grouped[etiq] = [];
             grouped[etiq].push(item);
         });
-
         const groups = Object.keys(grouped).sort().reverse();
-        const totalPages = Math.ceil(groups.length / itemsPerPage);
-        if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
-
-        const paginatedGroups = groups.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
         let html = '';
-        paginatedGroups.forEach(etiq => {
+        groups.forEach(etiq => {
             const items = grouped[etiq];
-            html += `
-            <div class="accordion-group">
+            html += `<div class="accordion-group">
                 <div class="accordion-header" onclick="toggleAccordion(this)">
-                    <div>
-                        <span class="etiq-badge">${etiq}</span>
-                        <span style="margin-left:8px;">${items.length} peça${items.length !== 1 ? 's' : ''}</span>
-                    </div>
-                    <span class="accordion-toggle">▼</span>
+                    <div><span style="border:1px solid #ccc; padding:2px 5px; border-radius:4px;">${etiq}</span> ${items.length} peças</div>
+                    <div>▼</div>
                 </div>
                 <div class="accordion-content">
-                    <table class="accordion-table">
-                        <thead>
-                            <tr><th>Data/Hora</th><th>Ref</th><th>DM</th><th>Status</th></tr>
-                        </thead>
-                        <tbody>
-                            ${items.slice().reverse().map(p => `
-                            <tr>
-                                <td>${p.hora}</td>
-                                <td>${p.ref}</td>
-                                <td style="font-weight:bold;">${p.dm}</td>
-                                <td><span class="status-badge ${p.status === 'OK' ? 'status-ok' : (p.status === 'RETRABALHADA' ? 'status-retrabalhada' : 'status-nok')}">${p.status}</span></td>
-                            </tr>
-                            `).join('')}
-                        </tbody>
+                    <table style="width:100%; font-size:10px;">
+                        ${items.map(p => `<tr><td>${p.dm}</td><td>${p.status}</td></tr>`).join('')}
                     </table>
                 </div>
-            </div>
-            `;
+            </div>`;
         });
-
-        document.getElementById('accordion-container').innerHTML = html || '<p style="text-align:center; color:#fff; padding:20px;">Nenhum registro encontrado</p>';
-        document.getElementById('hist-counter').innerText = `Registos: ${filtered.length}`;
-        
-        // Paginação
-        const pagControls = document.getElementById('pagination-controls');
-        if (totalPages > 1) {
-            pagControls.innerHTML = `
-                <button class="btn-page" onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>&lt;</button>
-                <span>Pág ${currentPage} de ${totalPages}</span>
-                <button class="btn-page" onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>&gt;</button>
-            `;
-        } else {
-            pagControls.innerHTML = '';
-        }
-    }
-
-    function changePage(dir) {
-        currentPage += dir;
-        renderHist();
-    }
-
-    async function updateFilterOptions() {
-        const dbList = await getAllFromDB("historico");
-        const insps = [...new Set(dbList.map(i => i.insp).filter(Boolean))];
-        const refs = [...new Set(dbList.map(i => i.ref).filter(Boolean))];
-        document.getElementById('f-insp').innerHTML = '<option value="">Todos</option>' + insps.map(i => `<option value="${i}">${i}</option>`).join('');
-        document.getElementById('f-ref').innerHTML = '<option value="">Todas</option>' + refs.map(r => `<option value="${r}">${r}</option>`).join('');
-    }
-
-    async function exportExcel() {
-        const dbList = await getAllFromDB("historico");
-        const ws = XLSX.utils.json_to_sheet(dbList);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Dados");
-        XLSX.writeFile(wb, "Traca_Export.xlsx");
+        document.getElementById('accordion-container').innerHTML = html;
     }
 
     async function clearHistorySecure() { 
-        if(confirm("Limpar tudo?") && prompt("Digite APAGAR") === "APAGAR") { await clearStore("historico"); currentPage=1; await renderHist(); } 
+        if(confirm("Limpar tudo?") && prompt("Digite APAGAR") === "APAGAR") { 
+            const transaction = dbInstance.transaction(["historico"], "readwrite");
+            transaction.objectStore("historico").clear();
+            renderHist(); 
+        } 
     }
 
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('live-date').innerText = now.toLocaleDateString('pt-PT');
+        document.getElementById('live-time').innerText = now.toLocaleTimeString('pt-PT');
+    }
+    
     window.onload = async () => { 
-        updateClock(); 
+        setInterval(updateClock, 1000);
         await initIndexedDB();
         updateDatalists(); updateUI(); focusDM(); 
     };
+
+    function exportExcel() {
+        getAllFromDB("historico").then(list => {
+            const ws = XLSX.utils.json_to_sheet(list);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Dados");
+            XLSX.writeFile(wb, "Traca_Export.xlsx");
+        });
+    }
+
+    async function exportToGoogleDriveManual() {
+        const list = await getAllFromDB("historico");
+        if(await sendToGoogleDrive(list)) showPopup("Sincronizado!"); else showPopup("Erro!", "error");
+    }
 </script>
 </body>
 </html>
